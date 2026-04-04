@@ -1,0 +1,148 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Google Fonts ─────────────────────────────────── */
+/* Loaded via index.html link tag */
+
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: #080000;
+    color: #ffffff;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #0d0000;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #3a0000;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #5a0000;
+  }
+
+  ::selection {
+    background: rgba(184, 134, 11, 0.3);
+    color: #ffffff;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.5) sepia(1) saturate(2) hue-rotate(10deg);
+    cursor: pointer;
+  }
+
+  option {
+    background-color: #1a0000;
+    color: white;
+  }
+}
+
+@layer utilities {
+  /* ─── Glassmorphism ──────────────────────────── */
+  .glass {
+    background: rgba(15, 2, 2, 0.50);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 80, 80, 0.08);
+  }
+
+  .glass-card {
+    background: rgba(12, 1, 1, 0.70);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(184, 134, 11, 0.12);
+    box-shadow: 0 8px 48px 0 rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255,255,255,0.03);
+  }
+
+  /* ─── Gold Shimmer Text ──────────────────────── */
+  .text-gold-shimmer {
+    background: linear-gradient(
+      90deg,
+      #b8860b 0%,
+      #fbbf24 40%,
+      #fcd34d 50%,
+      #fbbf24 60%,
+      #b8860b 100%
+    );
+    background-size: 200% auto;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 3s linear infinite;
+  }
+
+  @keyframes shimmer {
+    to { background-position: 200% center; }
+  }
+
+  /* ─── Ornamental Divider ─────────────────────── */
+  .ornamental-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .ornamental-divider::before,
+  .ornamental-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(184,134,11,0.5), transparent);
+  }
+
+  /* ─── Print Styles ───────────────────────────── */
+  @media print {
+    .print\:hidden {
+      display: none !important;
+    }
+
+    body {
+      background: #0a0000 !important;
+      color: white !important;
+    }
+
+    .glass, .glass-card {
+      background: rgba(15, 2, 2, 0.95) !important;
+      border: 1px solid rgba(184, 134, 11, 0.2) !important;
+    }
+
+    nav, footer {
+      display: none !important;
+    }
+  }
+
+  /* ─── Focus Ring ─────────────────────────────── */
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  button:focus-visible {
+    outline: 2px solid rgba(184, 134, 11, 0.5);
+    outline-offset: 2px;
+  }
+
+  /* ─── Transition Defaults ───────────────────── */
+  .transition-theme {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
