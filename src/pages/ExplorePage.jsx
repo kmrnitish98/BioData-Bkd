@@ -7,8 +7,10 @@ import { Search, Heart } from 'lucide-react';
 import { apiGetPublicBiodatas } from '../api/client';
 import BiodataCard from '../components/biodata/BiodataCard';
 import Button from '../components/ui/Button';
+import { useSEO } from '../hooks/useSEO';
 
 const ExplorePage = () => {
+  useSEO('/explore');
   const [biodatas, setBiodatas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -63,10 +65,15 @@ const ExplorePage = () => {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-12" data-aos="fade-up">
-            <h2 className="text-sm font-medium text-[#d4a017] tracking-widest uppercase mb-3">Discover</h2>
-            <h3 className="text-4xl md:text-5xl font-light text-white mb-8" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-              Explore <span className="text-[#f0c040] italic">Profiles</span>
-            </h3>
+            <p className="text-sm font-medium text-[#d4a017] tracking-widest uppercase mb-3">
+              Discover Rishta
+            </p>
+            <h1 className="text-4xl md:text-5xl font-light text-white mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+              Explore Marriage{" "}<span className="text-[#f0c040] italic">Biodata Profiles</span>
+            </h1>
+            <p className="text-sm text-[#a89060] max-w-xl mx-auto mb-6">
+              Bihar, UP, Jharkhand ke verified matrimonial profiles browse kare — free mein.
+            </p>
 
             <div className="max-w-2xl mx-auto flex flex-col items-center gap-6">
               <div className="w-full relative group">

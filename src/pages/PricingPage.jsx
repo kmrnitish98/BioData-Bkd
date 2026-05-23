@@ -12,6 +12,7 @@ import {
   Star,
   ChevronDown,
 } from "lucide-react";
+import { useSEO } from '../hooks/useSEO';
 
 /* ─────────────────────────────────────────────
    Data
@@ -237,6 +238,8 @@ function FAQItem({ faq, index }) {
    Page
 ───────────────────────────────────────────── */
 export default function PricingPage() {
+  useSEO('/pricing');
+
   return (
     <>
       <style>{`
@@ -718,11 +721,11 @@ export default function PricingPage() {
               Premium Plans
             </div>
             <h1 className="pricing-title">
-              Choose Your <span>Sacred Journey</span>
+              Free &amp; Premium{" "}<span>Shaadi Biodata Plans</span>
             </h1>
             <p className="pricing-subtitle">
-              Craft the perfect biodata that represents your heritage, values, and aspirations.
-              From free to premium — find the plan that honors your story.
+              Shaadi biodata banaye free mein — ya upgrade karo premium templates ke liye.
+              Bihar, UP, Jharkhand ke parivaron ke liye India ka most trusted biodata platform.
             </p>
           </motion.div>
 

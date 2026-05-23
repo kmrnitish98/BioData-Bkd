@@ -1,22 +1,32 @@
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { LanguageProvider } from './context/LanguageContext';
 import Navbar from './components/layout/Navbar';
 import ProtectedRoute from './components/layout/ProtectedRoute';
-import HomePage from './pages/HomePage';
-import LoginPage from './pages/LoginPage';
-import SignupPage from './pages/SignupPage';
-import CreateBiodataPage from './pages/CreateBiodataPage';
-import EditBiodataPage from './pages/EditBiodataPage';
-import ProfilePage from './pages/ProfilePage';
-import DashboardPage from './pages/DashboardPage';
-import GalleryPage from './pages/GalleryPage';
-import AboutPage from './pages/AboutPage';
-import PricingPage from './pages/PricingPage';
-import PrivacyPage from './pages/PrivacyPage';
-import TermsPage from './pages/TermsPage';
-import RefundPage from './pages/RefundPage';
-import ContactPage from './pages/ContactPage';
-import ExplorePage from './pages/ExplorePage';
+
+const HomePage = lazy(() => import('./pages/HomePage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const SignupPage = lazy(() => import('./pages/SignupPage'));
+const CreateBiodataPage = lazy(() => import('./pages/CreateBiodataPage'));
+const EditBiodataPage = lazy(() => import('./pages/EditBiodataPage'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const GalleryPage = lazy(() => import('./pages/GalleryPage'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
+const PricingPage = lazy(() => import('./pages/PricingPage'));
+const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
+const TermsPage = lazy(() => import('./pages/TermsPage'));
+const RefundPage = lazy(() => import('./pages/RefundPage'));
+const ContactPage = lazy(() => import('./pages/ContactPage'));
+const ExplorePage = lazy(() => import('./pages/ExplorePage'));
+
+// Inline Loading fallback component
+const PageLoader = () => (
+  <div className="min-h-screen flex flex-col items-center justify-center bg-[#0d0000]">
+    <div className="w-12 h-12 border-4 border-[#d4a017] border-t-transparent rounded-full animate-spin"></div>
+    <p className="mt-4 text-[#d4a017] font-medium tracking-widest text-sm uppercase">Loading...</p>
+  </div>
+);
 
 // Inline 404 page — no extra file needed for a simple fallback
 const NotFoundPage = () => (
@@ -38,47 +48,49 @@ function App() {
     <LanguageProvider>
       <BrowserRouter>
         <Navbar />
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/gallery" element={<GalleryPage />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/pricing" element={<PricingPage />} />
-        <Route path="/privacy" element={<PrivacyPage />} />
-        <Route path="/terms" element={<TermsPage />} />
-        <Route path="/refund" element={<RefundPage />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="/explore" element={<ExplorePage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
-        <Route path="/profile/:id" element={<ProfilePage />} />
-        <Route
-          path="/create"
-          element={
-            <ProtectedRoute>
-              <CreateBiodataPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/edit/:id"
-          element={
-            <ProtectedRoute>
-              <EditBiodataPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          }
-        />
-        {/* Catch-all: renders for any unknown URL */}
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-    </BrowserRouter>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/gallery" element={<GalleryPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/refund" element={<RefundPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/explore" element={<ExplorePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route path="/profile/:id" element={<ProfilePage />} />
+            <Route
+              path="/create"
+              element={
+                <ProtectedRoute>
+                  <CreateBiodataPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/edit/:id"
+              element={
+                <ProtectedRoute>
+                  <EditBiodataPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            {/* Catch-all: renders for any unknown URL */}
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </Suspense>
+      </BrowserRouter>
     </LanguageProvider>
   );
 }

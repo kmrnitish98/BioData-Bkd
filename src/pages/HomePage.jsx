@@ -40,6 +40,8 @@ import { apiGetPublicBiodatas } from "../api/client";
 import BiodataCard from "../components/biodata/BiodataCard";
 import Button from "../components/ui/Button";
 import { useAuth } from "../hooks/useAuth";
+import { useSEO } from '../hooks/useSEO';
+import { FAQSchema, ReviewSchema } from '../components/seo/SchemaMarkup';
 
 // Constants
 const BACKGROUND_VIDEOS = [
@@ -94,6 +96,7 @@ const HERO_MEDIA = [
 
 const HomePage = () => {
   const { currentUser } = useAuth();
+  useSEO('/');
   const [biodatas, setBiodatas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -147,6 +150,8 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen bg-[#0f0a00] text-[#f5ead0] overflow-hidden font-['DM_Sans',sans-serif] selection:bg-[#d4a017]/30 selection:text-[#f0c040]">
+      {/* Schema Markup for Rich Results */}
+      <ReviewSchema ratingValue="4.9" reviewCount="10000" />
       {/* WhatsApp Floating Button */}
       <a
         href="https://wa.me/1234567890"
@@ -228,23 +233,34 @@ const HomePage = () => {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
-                className="text-5xl md:text-6xl lg:text-7xl font-light text-white mb-6 leading-[1.1]"
+                className="text-5xl md:text-6xl lg:text-7xl font-light text-white mb-3 leading-[1.1]"
                 style={{ fontFamily: "Cormorant Garamond, serif" }}
               >
-                Find Your <br />
+                Create Your{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#d4a017] via-[#f0c040] to-[#b8860b] font-medium drop-shadow-sm">
-                  Perfect Match
+                  Shaadi Biodata
                 </span>
               </motion.h1>
+
+              {/* SEO-rich H2 subtitle */}
+              <motion.h2
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.3 }}
+                className="text-lg font-light text-[#d4a017] mb-4 tracking-wide"
+                style={{ fontFamily: "Cormorant Garamond, serif" }}
+              >
+                India's Trusted Marriage Biodata &amp; Matrimonial Platform
+              </motion.h2>
 
               <motion.p
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
-                className="text-lg text-[#a89060] mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed font-light"
+                className="text-lg text-[#a89060] mb-4 max-w-xl mx-auto lg:mx-0 leading-relaxed font-light"
               >
-                Create beautiful, shareable Indian wedding biodatas with a
-                premium modern experience for families and life partners.
+                Shaadi ke liye professional biodata banaye — fast, secure &amp; beautiful.
+                Bihar, UP, Jharkhand ke parivaron ka bharosemand digital Aguaa.
               </motion.p>
 
               <motion.div
@@ -258,9 +274,10 @@ const HomePage = () => {
                     variant="gold"
                     size="xl"
                     className="px-2 py-3 lg:px-4 lg:py-4 md:px-3 md:py-3 sm:w-auto text-lg shadow-[0_0_30px_rgba(212,160,23,0.3)] hover:shadow-[0_0_40px_rgba(212,160,23,0.5)] transition-shadow"
+                    aria-label="Create your marriage biodata on Aguaa"
                   >
                     <Sparkles className="w-5 h-5 mr-2" />
-                    Create My BioData
+                    Apna Biodata Banaye
                   </Button>
                 </Link>
                 <Link to="/explore">
@@ -338,8 +355,10 @@ const HomePage = () => {
                       <div className="relative w-full h-full group">
                         <img
                           src={media.src}
-                          alt="Wedding"
+                          alt={`Indian wedding marriage biodata couple - beautiful matrimonial profile ${idx + 1}`}
                           loading="lazy"
+                          width="320"
+                          height="480"
                           className="w-full h-full object-cover transition-transform duration-[10000ms] group-hover:scale-110"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-[#0f0a00]/90 via-[#0f0a00]/20 to-transparent" />
@@ -487,15 +506,35 @@ const HomePage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-16" data-aos="fade-up">
             <h2 className="text-sm font-medium text-[#d4a017] tracking-widest uppercase mb-3">
-              Why Choose Us
+              Why Choose Aguaa?
             </h2>
             <h3
-              className="text-4xl md:text-5xl font-light text-white"
+              className="text-4xl md:text-5xl font-light text-white mb-6"
               style={{ fontFamily: "Cormorant Garamond, serif" }}
             >
-              Experience <span className="text-[#f0c040] italic">Premium</span>{" "}
-              Matrimony
+              India&apos;s Most Trusted{" "}
+              <span className="text-[#f0c040] italic">Shaadi Biodata</span>{" "}
+              Platform
             </h3>
+            {/* Trust Badges */}
+            <div className="flex flex-wrap justify-center gap-3 mb-8">
+              {[
+                { icon: "🔒", label: "SSL Secured" },
+                { icon: "✅", label: "100% Verified Profiles" },
+                { icon: "⚡", label: "Instant PDF Download" },
+                { icon: "🛡️", label: "Privacy Protected" },
+                { icon: "📱", label: "Mobile Friendly" },
+                { icon: "🆓", label: "Free to Start" },
+              ].map(({ icon, label }) => (
+                <span
+                  key={label}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-[#d4a017]/30 text-[#a89060] bg-[#1f1500]/80"
+                >
+                  <span>{icon}</span>
+                  {label}
+                </span>
+              ))}
+            </div>
             <div className="mt-6 flex justify-center items-center gap-3">
               <div className="h-px w-12 bg-gradient-to-r from-transparent to-[#d4a017]/50" />
               <Heart className="w-4 h-4 text-[#d4a017]" />
@@ -1137,7 +1176,7 @@ const HomePage = () => {
                   {/* Image */}
                   <img
                     src={item.src}
-                    alt={`Wedding ${item.tag}`}
+                    alt={`Indian ${item.tag.toLowerCase()} wedding photo — Aguaa matrimonial gallery`}
                     loading="lazy"
                     className="w-full h-auto object-cover block transition-transform duration-700 group-hover:scale-[1.06]"
                   />
@@ -1215,353 +1254,83 @@ const HomePage = () => {
                 </motion.div>
               ))}
           </div>
-
-          {/* ── Load More ── */}
-          {/* ── Bottom Action Bar */}
-          <div
-            className="mt-14 flex flex-col items-center gap-4"
-            data-aos="fade-up"
-          >
-            <p className="text-xs text-[#a89060] tracking-widest uppercase">
-              Showing {Math.min(galleryLimit, HERO_MEDIA.length)} of{" "}
-              {HERO_MEDIA.length} photos
-            </p>
-            {/* Progress bar */}
-            <div
-              className="w-48 h-1 rounded-full overflow-hidden"
-              style={{ background: "rgba(212,160,23,0.2)" }}
-            >
-              <div
-                className="h-full rounded-full transition-all duration-500"
-                style={{
-                  width: `${(Math.min(galleryLimit, HERO_MEDIA.length) / HERO_MEDIA.length) * 100}%`,
-                  background: "linear-gradient(90deg, #d4a017, #f0c040)",
-                }}
-              />
-            </div>
-
-            {/* Two primary action buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 mt-2">
-              {/* Upload button */}
-              <motion.button
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => setShowGalleryUpload(true)}
-                className="flex items-center gap-2 px-6 py-3 rounded-full text-sm font-bold transition-all"
-                style={{
-                  background: "linear-gradient(135deg, #d4a017, #f0c040)",
-                  color: "#1a0800",
-                  boxShadow: "0 4px 20px rgba(212,160,23,0.35)",
-                }}
-              >
-                <Upload className="w-4 h-4" />
-                Upload Your Photo
-              </motion.button>
-
-              {/* View full gallery page */}
-              <Link to="/gallery">
-                <motion.div
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="flex items-center gap-2 px-6 py-3 rounded-full text-sm font-bold border transition-all cursor-pointer"
-                  style={{
-                    borderColor: "rgba(212,160,23,0.5)",
-                    background: "rgba(212,160,23,0.06)",
-                    color: "#f0c040",
-                  }}
-                >
-                  <Sparkles className="w-4 h-4" />
-                  View Full Gallery
-                  <ArrowRight className="w-4 h-4" />
-                </motion.div>
-              </Link>
-            </div>
-          </div>
-
-          {/* ── Inline Upload Modal (homepage) */}
-          <AnimatePresence>
-            {showGalleryUpload && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-                style={{
-                  background: "rgba(0,0,0,0.85)",
-                  backdropFilter: "blur(8px)",
-                }}
-                onClick={(e) =>
-                  e.target === e.currentTarget && setShowGalleryUpload(false)
-                }
-              >
-                <motion.div
-                  initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                  animate={{ scale: 1, opacity: 1, y: 0 }}
-                  exit={{ scale: 0.9, opacity: 0 }}
-                  transition={{ type: "spring", damping: 20 }}
-                  className="w-full max-w-lg rounded-3xl overflow-hidden"
-                  style={{
-                    background: "linear-gradient(145deg, #1a0a00, #2a1200)",
-                    border: "1px solid rgba(212,160,23,0.4)",
-                    boxShadow: "0 25px 80px rgba(0,0,0,0.8)",
-                    maxHeight: "90vh",
-                    overflowY: "auto",
-                  }}
-                >
-                  <div
-                    className="flex items-center justify-between p-5 border-b"
-                    style={{ borderColor: "rgba(212,160,23,0.2)" }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-9 h-9 rounded-full flex items-center justify-center"
-                        style={{
-                          background:
-                            "linear-gradient(135deg, #d4a017, #f0c040)",
-                        }}
-                      >
-                        <Upload className="w-4 h-4 text-[#1a0800]" />
-                      </div>
-                      <h2
-                        className="text-white font-bold"
-                        style={{ fontFamily: "Cormorant Garamond, serif" }}
-                      >
-                        Upload Wedding Photos
-                      </h2>
-                    </div>
-                    <button
-                      onClick={() => setShowGalleryUpload(false)}
-                      className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
-                      style={{ color: "#a89060" }}
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <div className="p-5">
-                    <div
-                      className="rounded-2xl border-2 border-dashed p-10 text-center cursor-pointer transition-all"
-                      style={{
-                        borderColor: "rgba(212,160,23,0.4)",
-                        background: "rgba(212,160,23,0.03)",
-                      }}
-                      onClick={() =>
-                        document.getElementById("home-gallery-input")?.click()
-                      }
-                    >
-                      <input
-                        id="home-gallery-input"
-                        type="file"
-                        multiple
-                        accept="image/*"
-                        className="hidden"
-                        onChange={() => {
-                          setShowGalleryUpload(false);
-                          window.location.href = "/gallery";
-                        }}
-                      />
-                      <Upload
-                        className="w-10 h-10 mx-auto mb-3"
-                        style={{ color: "#d4a017" }}
-                      />
-                      <p
-                        className="text-white font-semibold mb-1"
-                        style={{ fontFamily: "Cormorant Garamond, serif" }}
-                      >
-                        Click to select photos
-                      </p>
-                      <p className="text-xs" style={{ color: "#a89060" }}>
-                        You'll be taken to the full gallery to manage your
-                        uploads
-                      </p>
-                    </div>
-                    <Link
-                      to="/gallery"
-                      onClick={() => setShowGalleryUpload(false)}
-                    >
-                      <button
-                        className="w-full mt-4 py-3 rounded-2xl text-sm font-bold flex items-center justify-center gap-2"
-                        style={{
-                          background:
-                            "linear-gradient(135deg, #d4a017, #f0c040)",
-                          color: "#1a0800",
-                        }}
-                      >
-                        <Sparkles className="w-4 h-4" />
-                        Go to Full Gallery & Upload
-                      </button>
-                    </Link>
-                  </div>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
       </section>
 
-      {/* ================= SECTION 6: APP FEATURES ================= */}
-      <section className="py-[56px] lg:py-[96px] relative overflow-hidden">
-        {/* BG: Diagonal mesh / crosshatch + warm amber-tinted darkness */}
-        <div
-          className="absolute inset-0 z-0"
-          style={{
-            background:
-              "linear-gradient(115deg, #110600 0%, #1c0d00 40%, #0e0500 100%)",
-          }}
-        />
-        <div
-          className="absolute inset-0 z-0 opacity-[0.07]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(212,160,23,0.7) 1px, transparent 1px), linear-gradient(90deg, rgba(212,160,23,0.7) 1px, transparent 1px)",
-            backgroundSize: "60px 60px",
-          }}
-        />
-        <div
-          className="absolute inset-0 z-0 opacity-[0.04]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(139,0,0,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(139,0,0,0.8) 1px, transparent 1px)",
-            backgroundSize: "30px 30px",
-            backgroundPosition: "15px 15px",
-          }}
-        />
-        <div
-          className="absolute right-0 top-0 w-[600px] h-[600px] opacity-10 z-0"
-          style={{
-            background: "radial-gradient(circle, #d4a017 0%, transparent 60%)",
-            transform: "translate(30%,-30%)",
-          }}
-        />
-        <div
-          className="absolute left-0 bottom-0 w-[400px] h-[400px] opacity-8 z-0"
-          style={{
-            background: "radial-gradient(circle, #8b3a00 0%, transparent 60%)",
-            transform: "translate(-20%,20%)",
-          }}
-        />
-        <div
-          className="absolute top-0 left-0 right-0 h-px z-0"
-          style={{
-            background:
-              "linear-gradient(90deg, transparent, rgba(212,160,23,0.35), transparent)",
-          }}
-        />
-        <div
-          className="absolute bottom-0 left-0 right-0 h-px z-0"
-          style={{
-            background:
-              "linear-gradient(90deg, transparent, rgba(212,160,23,0.35), transparent)",
-          }}
-        />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div data-aos="fade-right">
-              <h2 className="text-sm font-medium text-[#d4a017] tracking-widest uppercase mb-3">
-                Premium Features
-              </h2>
-              <h3
-                className="text-4xl md:text-5xl font-light text-white mb-6 leading-tight"
+      {/* ================= GEO: AI SEARCH CONTENT BLOCK ================= */}
+      {/* This section is optimized for ChatGPT, Gemini, Perplexity, Google AI Overview */}
+      <section
+        className="py-12 relative overflow-hidden"
+        style={{ background: "linear-gradient(180deg, #080206 0%, #0c0208 100%)" }}
+        aria-label="About Aguaa — AI-optimized content"
+      >
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-2 gap-10 items-start">
+            {/* Block 1: What is Aguaa? */}
+            <div
+              className="rounded-2xl p-8 border border-[#d4a017]/20"
+              style={{ background: "rgba(212,160,23,0.04)" }}
+              data-aos="fade-right"
+            >
+              <h2
+                className="text-2xl font-semibold text-white mb-3"
                 style={{ fontFamily: "Cormorant Garamond, serif" }}
               >
-                Everything You Need for a{" "}
-                <span className="text-[#f0c040] italic">Perfect Profile</span>
-              </h3>
-              <p className="text-[#a89060] mb-10 leading-relaxed text-lg font-light">
-                Our platform is designed with modern Indian families in mind,
-                offering a seamless blend of tradition and technology.
+                What is Aguaa? / Aguaa Kya Hai?
+              </h2>
+              <p className="text-[#a89060] leading-relaxed text-sm mb-3">
+                <strong className="text-[#f0c040]">Aguaa</strong> is a traditional word from Bihar and UP culture meaning a trusted <em>marriage mediator</em> — someone who connects the bride&apos;s and groom&apos;s families for a successful marriage (shaadi).
               </p>
+              <p className="text-[#a89060] leading-relaxed text-sm">
+                <strong className="text-[#f0c040]">Aguaa.in</strong> is India&apos;s digital Aguaa — an online matrimonial biodata platform built specifically for families in <strong>Bihar, UP, and Jharkhand</strong>. Create beautiful marriage biodatas, explore profiles, and find the perfect rishta.
+              </p>
+            </div>
 
-              <div className="space-y-5">
+            {/* Block 2: How to make shaadi biodata */}
+            <div
+              className="rounded-2xl p-8 border border-[#d4a017]/20"
+              style={{ background: "rgba(212,160,23,0.04)" }}
+              data-aos="fade-left"
+            >
+              <h2
+                className="text-2xl font-semibold text-white mb-3"
+                style={{ fontFamily: "Cormorant Garamond, serif" }}
+              >
+                Shaadi Biodata Kaise Banaye?
+              </h2>
+              <p className="text-[#a89060] leading-relaxed text-sm mb-3">
+                Aguaa par <strong className="text-[#f0c040]">marriage biodata banana</strong> bilkul aasaan hai. Sirf 3 simple steps mein:
+              </p>
+              <ol className="space-y-2">
                 {[
-                  { icon: Download, title: "Export to High-Quality PDF" },
-                  { icon: Share2, title: "One-Click WhatsApp Sharing" },
-                  { icon: QrCode, title: "Custom QR Code for Quick Access" },
-                  { icon: Lock, title: "Advanced Privacy Controls" },
-                  { icon: FileText, title: "Multiple Royal Templates" },
-                ].map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center gap-4 group text-[15px]"
-                  >
-                    <div className="w-8 h-8 rounded-full bg-[#1f1500] border border-[#d4a017]/50 flex items-center justify-center group-hover:bg-[#2a1e08] group-hover:border-[#f0c040] transition-colors shadow-sm">
-                      <Check className="w-4 h-4 text-[#d4a017]" />
-                    </div>
-                    <span className="text-[#f5ead0] group-hover:text-white transition-colors">
-                      {item.title}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div data-aos="fade-up" data-aos-delay="200" className="relative">
-              <div className="absolute inset-0 bg-gradient-to-tr from-[#d4a017]/10 to-[#f0c040]/10 rounded-full blur-3xl opacity-60" />
-              <div className="relative bg-[#0f0a00] border border-[#d4a017]/30 rounded-[2.5rem] p-4 shadow-[0_20px_50px_rgba(0,0,0,0.8)] mx-auto w-full max-w-sm overflow-hidden">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-[#1a1000] border-b border-[#d4a017]/20 rounded-b-3xl z-20" />
-
-                {/* Scrolling content inside mockup */}
-                <div className="bg-[#1f1500] rounded-[2rem] h-[600px] relative border border-[#d4a017]/20 shadow-inner overflow-y-auto no-scrollbar">
-                  <div className="h-56 bg-gradient-to-b from-[#2a1e08] to-transparent relative">
-                    <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
-                      <div className="w-8 h-8 rounded-full bg-black/50 backdrop-blur flex items-center justify-center">
-                        <ChevronDown className="w-5 h-5 text-[#f5ead0] rotate-90" />
-                      </div>
-                      <div className="w-8 h-8 rounded-full bg-black/50 backdrop-blur flex items-center justify-center">
-                        <Share2 className="w-4 h-4 text-[#f5ead0]" />
-                      </div>
-                    </div>
-                    <div className="absolute -bottom-14 left-1/2 -translate-x-1/2 w-32 h-32 rounded-full border-4 border-[#1f1500] bg-gray-800 overflow-hidden shadow-lg">
-                      <img
-                        src={HERO_MEDIA[1].src}
-                        alt="Avatar"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="mt-20 px-6 pb-20 text-center">
-                    <h4
-                      className="text-3xl font-bold text-white mb-2"
-                      style={{ fontFamily: "Cormorant Garamond, serif" }}
+                  { step: "1", text: "Free account banaye aur personal details bhare" },
+                  { step: "2", text: "Photo upload kare aur premium template choose kare" },
+                  { step: "3", text: "PDF download kare ya WhatsApp par share kare" },
+                ].map(({ step, text }) => (
+                  <li key={step} className="flex items-start gap-3 text-sm text-[#a89060]">
+                    <span
+                      className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-[#0f0a00]"
+                      style={{ background: "linear-gradient(135deg, #d4a017, #f0c040)" }}
                     >
-                      Priya Sharma, 26
-                    </h4>
-                    <p className="text-[#d4a017] text-sm mb-8 font-medium tracking-wide">
-                      Software Engineer • Mumbai
-                    </p>
-
-                    <div className="space-y-4">
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <div
-                          key={i}
-                          className="bg-[#2a1e08] rounded-xl border border-[#d4a017]/20 p-4 text-left"
-                        >
-                          <div className="flex items-center gap-2 mb-3">
-                            <span className="w-2 h-2 rounded-full bg-[#f0c040] shadow-[0_0_5px_rgba(240,192,64,0.8)]" />
-                            <div className="h-2 w-24 bg-[#a89060]/50 rounded-full" />
-                          </div>
-                          <div className="space-y-2">
-                            <div className="h-2 w-full bg-[#1a1000] rounded-full" />
-                            <div className="h-2 w-4/5 bg-[#1a1000] rounded-full" />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="sticky bottom-0 p-4 bg-gradient-to-t from-[#1f1500] via-[#1f1500] to-transparent">
-                    <div className="flex gap-3 mt-4">
-                      <div className="flex-1 h-12 bg-gradient-to-r from-[#d4a017] to-[#f0c040] rounded-xl flex items-center justify-center text-[#0f0a00] font-bold shadow-lg hover:shadow-[0_0_15px_rgba(212,160,23,0.4)] transition-shadow cursor-pointer">
-                        Connect
-                      </div>
-                      <div className="w-12 h-12 bg-[#0f0a00] border border-[#d4a017]/50 rounded-xl flex items-center justify-center cursor-pointer hover:bg-[#2a1e08] transition-colors">
-                        <Download className="w-5 h-5 text-[#f0c040]" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                      {step}
+                    </span>
+                    {text}
+                  </li>
+                ))}
+              </ol>
             </div>
+          </div>
+
+          {/* Trust + Keywords Row */}
+          <div className="mt-8 text-center" data-aos="fade-up">
+            <p className="text-xs text-[#a89060] leading-relaxed max-w-3xl mx-auto">
+              Aguaa is the best matrimonial biodata maker for{" "}
+              <a href="/explore" className="text-[#d4a017] hover:underline">Bihar matrimonial</a>,{" "}
+              <a href="/explore" className="text-[#d4a017] hover:underline">UP matrimonial</a>,{" "}
+              <a href="/explore" className="text-[#d4a017] hover:underline">Jharkhand matrimonial</a>,{" "}
+              shaadi biodata maker, marriage profile creator, rishta karane wala platform,{" "}
+              dulha dulhan biodata, विवाह बायोडाटा, शादी के लिए बायोडाटा।
+            </p>
           </div>
         </div>
       </section>
@@ -1624,51 +1393,54 @@ const HomePage = () => {
               Got Questions?
             </h2>
             <h3
-              className="text-4xl md:text-5xl font-light text-white"
+              className="text-4xl md:text-5xl font-light text-white mb-4"
               style={{ fontFamily: "Cormorant Garamond, serif" }}
             >
-              Frequently Asked{" "}
-              <span className="text-[#f0c040] italic">Questions</span>
+              Shaadi Biodata —{" "}
+              <span className="text-[#f0c040] italic">Sawal Jawab</span>
             </h3>
+            <p className="text-[#a89060] text-sm max-w-xl mx-auto">
+              Marriage biodata ke baare mein aapke saare sawalo ke jawab yahan milenge.
+            </p>
           </div>
 
           <div className="space-y-4">
             {[
               {
-                q: "How do I create a biodata?",
-                a: "Simply sign up, fill in your personal, family, and educational details in our easy-to-use form, select a premium template, and your biodata is ready instantly!",
+                q: "What is Aguaa? / Aguaa kya hai?",
+                a: "Aguaa India ka trusted online marriage biodata platform hai. 'Aguaa' shabd Bihar aur UP ki shaadi ki parampara se aaya hai — jiska matlab hai ek trusted marriage mediator jo dulha aur dulhan ke parivaron ko milata hai. Aguaa.in yahi kaam digital tarike se karta hai.",
               },
               {
-                q: "Is the platform free to use?",
-                a: "Yes, you can create and share your basic biodata for free. We also offer premium templates for users looking for an extra touch of luxury.",
+                q: "How to create a marriage biodata? / Biodata kaise banaye?",
+                a: "Aguaa par biodata banana bahut aasaan hai: 1) Free mein sign up karo, 2) Apni personal, family aur educational details bharo, 3) Photo upload karo, 4) Premium template choose karo, 5) PDF download karo ya WhatsApp par share karo. Poora process sirf 10 minutes leta hai!",
               },
               {
-                q: "Can I download my biodata as a PDF?",
-                a: "Absolutely! Once created, you can download your biodata in high-resolution PDF format with a single click, perfect for sharing on WhatsApp or printing.",
+                q: "Is Aguaa free to use? / Kya yeh free hai?",
+                a: "Haan! Aguaa par basic marriage biodata banana, download karna aur share karna bilkul free hai. Hum premium plans bhi offer karte hain jisme exclusive royal templates, advanced privacy controls, aur profile analytics milte hain.",
+              },
+              {
+                q: "Shaadi ke liye biodata mein kya likhna chahiye?",
+                a: "Ek acche shaadi biodata mein: Personal Info (naam, umar, height), Education & Occupation, Family Details (mata-pita, bhai-behen), Religious/Caste Info, Photo, aur Contact Details honi chahiye. Aguaa ka platform in sab cheezein automatically organize karta hai.",
+              },
+              {
+                q: "Can I download my biodata as PDF?",
+                a: "Absolutely! Once created, you can download your biodata in high-resolution PDF format with one click — perfect for WhatsApp sharing or printing. Premium users get additional PDF customization options.",
               },
               {
                 q: "Is my profile secure and private?",
-                a: "Your privacy is our top priority. You can choose to keep your profile public for wider reach or private, sharing it only via a secure link with specific families.",
+                a: "Your privacy is our top priority. Your data is protected with bank-grade encryption. You control visibility — keep it private (share only via secure link) or make it public. We never share your data with third parties.",
               },
               {
-                q: "Can I edit my biodata later?",
-                a: "Yes, you can log in to your dashboard anytime to update your details, change photos, or switch templates. Changes reflect immediately.",
+                q: "Bihar, UP, Jharkhand mein Aguaa kaise kaam karta hai?",
+                a: "Aguaa specially Bihar, UP aur Jharkhand ke parivaron ke liye banaya gaya hai. Aap apna biodata Hindi ya English mein bana sakte hain, apne region ke hisaab se customize kar sakte hain, aur local families se connect kar sakte hain.",
               },
               {
-                q: "Do you offer customer support?",
-                a: "Yes, our dedicated support team is available via WhatsApp and email to assist you with any queries during your matchmaking journey.",
+                q: "Can I edit my biodata after creating it?",
+                a: "Yes, log into your Aguaa dashboard anytime to update details, change photos, or switch templates. Changes reflect immediately and your shareable link stays the same.",
               },
               {
-                q: "Can I add multiple photos?",
-                a: "Yes, premium users can add a gallery of up to 5 photos to showcase their personality effectively.",
-              },
-              {
-                q: "Are the templates mobile-responsive?",
-                a: "Every template is designed to look stunning on both desktop and mobile devices.",
-              },
-              {
-                q: "Can I track who viewed my profile?",
-                a: "We provide basic analytics for premium users to see how many times their profile has been viewed and downloaded.",
+                q: "Does Aguaa offer customer support?",
+                a: "Yes! Our dedicated support team is available via WhatsApp and email. We help you every step of the matrimonial journey — from biodata creation to finding the perfect rishta.",
               },
             ].map((faq, idx) => (
               <div
@@ -1802,7 +1574,7 @@ const HomePage = () => {
                   className="text-3xl font-bold text-white tracking-wider group-hover:text-[#f5ead0] transition-colors"
                   style={{ fontFamily: "Cormorant Garamond, serif" }}
                 >
-                  BioData
+                  Aguaa
                 </span>
               </div>
               <p className="text-[#a89060] text-sm leading-relaxed mb-6 font-light">
@@ -1934,8 +1706,7 @@ const HomePage = () => {
 
           <div className="border-t border-[#d4a017]/20 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-[#a89060] text-sm">
-              © {new Date().getFullYear()} BioData. Crafted with love for
-              auspicious alliances.
+              © {new Date().getFullYear()} Aguaa — Dil Se Rishta, Vishwas Se Shaadi.
             </p>
             <div className="flex gap-2">
               <span className="w-8 h-8 rounded bg-[#1f1500] border border-[#d4a017]/20 flex items-center justify-center hover:bg-[#2a1e08] transition-colors cursor-pointer">

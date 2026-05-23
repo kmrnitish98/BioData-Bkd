@@ -12,6 +12,8 @@ import {
   ChevronLeft,
   User,
 } from "lucide-react";
+import { useSEO } from '../hooks/useSEO';
+import { BreadcrumbSchema } from '../components/seo/SchemaMarkup';
 
 /* ─── Framer‑motion helpers ─────────────────────────────────── */
 const fadeUp = {
@@ -44,8 +46,8 @@ const contactCards = [
   {
     icon: Mail,
     label: "Email",
-    value: "support@biodata.in",
-    href: "mailto:support@biodata.in",
+    value: "support@aguaa.in",
+    href: "mailto:support@aguaa.in",
     color: "#f0c040",
   },
   {
@@ -85,6 +87,8 @@ const subjects = [
    COMPONENT
 ═══════════════════════════════════════════════════════════════ */
 export default function ContactPage() {
+  useSEO('/contact');
+
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -144,6 +148,13 @@ export default function ContactPage() {
         overflow: "hidden",
       }}
     >
+      {/* Breadcrumb Schema */}
+      <BreadcrumbSchema
+        items={[
+          { name: 'Home', url: 'https://aguaa.in/' },
+          { name: 'Contact', url: 'https://aguaa.in/contact' },
+        ]}
+      />
       {/* ── Google Font ── */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap');
@@ -478,7 +489,7 @@ export default function ContactPage() {
                 WebkitTextFillColor: "transparent",
               }}
             >
-              Us
+              Aguaa
             </span>
           </h1>
 

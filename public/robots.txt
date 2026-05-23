@@ -1,0 +1,80 @@
+# robots.txt for Aguaa — https://aguaa.in
+# India's Trusted Marriage Biodata Platform
+
+# Allow all major crawlers
+User-agent: *
+Allow: /
+Allow: /about
+Allow: /explore
+Allow: /gallery
+Allow: /pricing
+Allow: /contact
+Allow: /privacy
+Allow: /terms
+Allow: /refund
+
+# Block private / authenticated routes
+Disallow: /dashboard
+Disallow: /create
+Disallow: /edit/
+Disallow: /profile/*/edit
+
+# Block dev/build artifacts
+Disallow: /*.json$
+Disallow: /node_modules/
+Disallow: /src/
+Disallow: /.git/
+Disallow: /dist/
+
+# Allow sitemap & icons
+Allow: /sitemap.xml
+Allow: /manifest.json
+Allow: /favicon.svg
+Allow: /logo.png
+
+# Sitemap location
+Sitemap: https://aguaa.in/sitemap.xml
+
+# Crawl rate
+Crawl-delay: 1
+
+# Googlebot specific
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+# Googlebot Images (for image indexing)
+User-agent: Googlebot-Image
+Allow: /
+
+# Bingbot
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+# GPTBot (OpenAI/ChatGPT)
+User-agent: GPTBot
+Allow: /
+Allow: /about
+Allow: /explore
+Allow: /pricing
+Allow: /contact
+Disallow: /dashboard
+Disallow: /create
+Disallow: /edit/
+
+# Google-Extended (Gemini AI)
+User-agent: Google-Extended
+Allow: /
+
+# PerplexityBot
+User-agent: PerplexityBot
+Allow: /
+
+# ClaudeBot (Anthropic)
+User-agent: ClaudeBot
+Allow: /
+
+# CCBot (Common Crawl for AI training)
+User-agent: CCBot
+Allow: /

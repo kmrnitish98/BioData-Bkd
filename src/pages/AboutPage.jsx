@@ -9,6 +9,8 @@ import {
   ChevronLeft,
   Sparkles,
 } from "lucide-react";
+import { useSEO } from '../hooks/useSEO';
+import { BreadcrumbSchema } from '../components/seo/SchemaMarkup';
 
 /* ─── Animation Variants ─────────────────────────────────────────── */
 const fadeUp = {
@@ -74,6 +76,8 @@ const stats = [
 
 /* ─── Component ───────────────────────────────────────────────────── */
 export default function AboutPage() {
+  useSEO('/about');
+
   return (
     <div
       style={{
@@ -84,6 +88,14 @@ export default function AboutPage() {
         overflowX: "hidden",
       }}
     >
+      {/* Breadcrumb Schema for rich results */}
+      <BreadcrumbSchema
+        items={[
+          { name: 'Home', url: 'https://aguaa.in/' },
+          { name: 'About Aguaa', url: 'https://aguaa.in/about' },
+        ]}
+      />
+
       {/* ── Hero Section ──────────────────────────────────────────── */}
       <section
         style={{
@@ -188,19 +200,37 @@ export default function AboutPage() {
           custom={2}
           style={{
             fontFamily: "'Cormorant Garamond', serif",
-            fontSize: "clamp(3rem, 8vw, 5.5rem)",
+            fontSize: "clamp(2.5rem, 7vw, 5rem)",
             fontWeight: 600,
             lineHeight: 1.1,
             background: "linear-gradient(135deg, #f0c040 20%, #d4a017 80%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             backgroundClip: "text",
-            margin: "0 auto 1.25rem",
+            margin: "0 auto 1rem",
             maxWidth: "800px",
           }}
         >
-          About Us
+          About Aguaa
         </motion.h1>
+
+        {/* SEO subtitle — secondary keyword phrase */}
+        <motion.h2
+          variants={fadeUp}
+          initial="hidden"
+          animate="visible"
+          custom={2.5}
+          style={{
+            fontFamily: "'Cormorant Garamond', serif",
+            fontSize: "clamp(1rem, 2.5vw, 1.4rem)",
+            fontWeight: 400,
+            color: "#d4a017",
+            margin: "0 auto 1rem",
+            letterSpacing: "0.04em",
+          }}
+        >
+          India&apos;s Trusted Digital Marriage Mediator Platform
+        </motion.h2>
 
         <motion.p
           variants={fadeUp}
@@ -216,8 +246,8 @@ export default function AboutPage() {
             letterSpacing: "0.02em",
           }}
         >
-          Crafting legacies, one biodata at a time — where tradition meets
-          timeless elegance.
+          Aguaa ka matlab hai ek trusted marriage mediator — jo dulha aur dulhan ke parivaron ko milata hai.
+          Hum Bihar, UP, Jharkhand ke parivaron ke liye digital rishte banate hain.
         </motion.p>
 
         {/* Bottom ornament */}
@@ -332,7 +362,7 @@ export default function AboutPage() {
               lineHeight: 1.2,
             }}
           >
-            Born from a Vision of{" "}
+            What is Aguaa? Born from{" "}
             <span
               style={{
                 background:
@@ -342,14 +372,14 @@ export default function AboutPage() {
                 backgroundClip: "text",
               }}
             >
-              Dignified Unions
+              Bharat Ki Parampara
             </span>
           </motion.h2>
 
           {[
-            "BioData was founded with a singular purpose: to restore dignity, artistry, and authenticity to the Indian matrimonial journey. In a landscape crowded with generic forms and impersonal databases, we envisioned something profoundly different — a platform where every biodata tells a story as unique as the individual behind it.",
-            "Rooted in the rich traditions of Indian matchmaking, yet designed for the modern family, BioData bridges generations. We understand that a matrimonial biodata is not merely a document — it is a family's first impression, a portrait of values, aspirations, and heritage presented to another family with trust and hope.",
-            "Since our founding, we have had the honour of serving over ten thousand families across India and the Indian diaspora worldwide. Our platform combines the warmth of tradition with the precision of modern design, offering handcrafted templates inspired by regional aesthetics, from the intricate motifs of Rajasthan to the classical elegance of South India.",
+            "The word 'Aguaa' (अगुआ) comes from the rich matrimonial culture of Bihar and Uttar Pradesh. Traditionally, an Aguaa is a trusted marriage mediator — a respected person who connects the bride's and groom's families, facilitating the sacred bond of marriage. Aguaa.in brings this beautiful tradition into the digital age.",
+            "We were founded with a singular purpose: to restore dignity, artistry, and authenticity to the Indian matrimonial journey. In a landscape crowded with generic matrimonial forms and impersonal databases, we built something profoundly different — a shaadi biodata platform where every profile tells a story as unique as the family behind it.",
+            "Since our founding, Aguaa has served over ten thousand families across Bihar, Uttar Pradesh, Jharkhand, and the broader Indian diaspora worldwide. Our platform combines the warmth of tradition with modern design — offering premium biodata templates, secure profile sharing, and easy PDF downloads for shaadi biodata creation.",
           ].map((para, i) => (
             <motion.p
               key={i}
@@ -843,8 +873,8 @@ export default function AboutPage() {
             letterSpacing: "0.05em",
           }}
         >
-          © {new Date().getFullYear()} BioData — India's Premium Matrimony
-          Biodata Platform. All rights reserved.
+          © {new Date().getFullYear()} Aguaa — India&apos;s Trusted Marriage Biodata Platform.
+          Dil Se Rishta, Vishwas Se Shaadi. All rights reserved.
         </p>
       </div>
     </div>
