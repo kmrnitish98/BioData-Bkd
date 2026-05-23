@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import Button from "../ui/Button";
-
+import logo from "../../assets/aguaa-logo-r.png";
 const Navbar = () => {
   const { currentUser, loading, logout } = useAuth();
   const navigate = useNavigate();
@@ -24,12 +24,14 @@ const Navbar = () => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
+
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const handleLogout = () => {
     logout();
+
     navigate("/");
   };
 
@@ -63,7 +65,7 @@ const Navbar = () => {
             {/* Logo */}
             <Link to="/" className="flex items-center group">
               <img
-                src="/logo.png"
+                src={logo}
                 alt="AGUAA Logo"
                 className="h-20 sm:h-18 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
               />
