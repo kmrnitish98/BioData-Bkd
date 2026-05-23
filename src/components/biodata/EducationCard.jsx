@@ -16,15 +16,15 @@ const EducationCard = ({ data = {} }) => {
 
   return (
     <Card delay={0.2}>
-      <Section icon={<BookOpen className="w-5 h-5" />} title="Education & Profession" accent="gold">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <Section icon={<BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />} title="Education & Profession" accent="gold">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
           {/* Education */}
           <div className="space-y-1">
-            <h3 className="text-sm font-semibold text-yellow-600/80 uppercase tracking-widest mb-3 flex items-center gap-2">
-              <GraduationCap className="w-4 h-4" />
+            <h3 className="text-xs sm:text-sm font-semibold text-yellow-600/80 uppercase tracking-widest mb-2 sm:mb-3 flex items-center gap-2">
+              <GraduationCap className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               Academic Background
             </h3>
-            <div className="pl-2 border-l border-yellow-900/40 space-y-2">
+            <div className="pl-2 border-l border-yellow-900/40 space-y-1 sm:space-y-2">
               {highestQualification && (
                 <IconText icon={<GraduationCap className="w-4 h-4" />} label="Qualification" value={highestQualification} />
               )}
@@ -42,11 +42,11 @@ const EducationCard = ({ data = {} }) => {
 
           {/* Profession */}
           <div className="space-y-1">
-            <h3 className="text-sm font-semibold text-yellow-600/80 uppercase tracking-widest mb-3 flex items-center gap-2">
-              <Briefcase className="w-4 h-4" />
+            <h3 className="text-xs sm:text-sm font-semibold text-yellow-600/80 uppercase tracking-widest mb-2 sm:mb-3 flex items-center gap-2">
+              <Briefcase className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               Professional Details
             </h3>
-            <div className="pl-2 border-l border-yellow-900/40 space-y-2">
+            <div className="pl-2 border-l border-yellow-900/40 space-y-1 sm:space-y-2">
               {occupation ? (
                 <>
                   {occupation && (

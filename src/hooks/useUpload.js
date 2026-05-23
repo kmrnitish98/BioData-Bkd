@@ -1,18 +1,19 @@
 import { useState, useCallback } from 'react';
-import { uploadProfilePhoto } from '../firebase/storage';
+import { apiUploadPhoto } from '../api/client';
 
 export const useUpload = () => {
   const [progress, setProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
 
-  const upload = useCallback(async (userId, file) => {
+  const upload = useCallback(async (file) => {
     setUploading(true);
     setProgress(0);
     setError(null);
     try {
-      const url = await uploadProfilePhoto(userId, file, setProgress);
-      return url;
+      const result = await apiUploadPhoto(file, setProgress);
+      // result = { photoURL, photoPublicId }
+      return result;
     } catch (err) {
       setError(err.message);
       throw err;

@@ -1,98 +1,123 @@
 import { useState, useCallback } from 'react';
 import {
-  createBiodata,
-  getBiodataById,
-  getUserBiodatas,
-  getPublicBiodatas,
-  updateBiodata,
-  deleteBiodata,
-} from '../firebase/firestore';
+  apiGetPublicBiodatas,
+  apiGetBiodataById,
+  apiGetPrivateBiodata,
+  apiGetMyBiodatas,
+  apiCreateBiodata,
+  apiUpdateBiodata,
+  apiDeleteBiodata,
+} from '../api/client';
 
 export const useBiodata = () => {
-  const [loading, setLoading] = useState(false);
+  // Counter-based loading: stays true until ALL in-flight operations finish
+  const [loadingCount, setLoadingCount] = useState(0);
   const [error, setError] = useState(null);
 
-  const create = useCallback(async (userId, data) => {
-    setLoading(true);
+  const startLoading = () => setLoadingCount((c) => c + 1);
+  const stopLoading = () => setLoadingCount((c) => c - 1);
+
+  const create = useCallback(async (data) => {
+    startLoading();
     setError(null);
     try {
-      const id = await createBiodata(userId, data);
-      return id;
+      const biodata = await apiCreateBiodata(data);
+      return biodata._id;
     } catch (err) {
       setError(err.message);
       throw err;
     } finally {
-      setLoading(false);
+      stopLoading();
     }
   }, []);
 
   const fetchById = useCallback(async (id) => {
-    setLoading(true);
+    startLoading();
     setError(null);
     try {
-      const data = await getBiodataById(id);
-      return data;
+      return await apiGetBiodataById(id);
     } catch (err) {
       setError(err.message);
       throw err;
     } finally {
-      setLoading(false);
+      stopLoading();
     }
   }, []);
 
-  const fetchByUser = useCallback(async (userId) => {
-    setLoading(true);
+  const fetchPrivateById = useCallback(async (id) => {
+    startLoading();
     setError(null);
     try {
-      const data = await getUserBiodatas(userId);
-      return data;
+      return await apiGetPrivateBiodata(id);
     } catch (err) {
       setError(err.message);
       throw err;
     } finally {
-      setLoading(false);
+      stopLoading();
+    }
+  }, []);
+
+  const fetchByUser = useCallback(async () => {
+    startLoading();
+    setError(null);
+    try {
+      return await apiGetMyBiodatas();
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      stopLoading();
     }
   }, []);
 
   const fetchPublic = useCallback(async () => {
-    setLoading(true);
+    startLoading();
     setError(null);
     try {
-      const data = await getPublicBiodatas();
-      return data;
+      return await apiGetPublicBiodatas();
     } catch (err) {
       setError(err.message);
       throw err;
     } finally {
-      setLoading(false);
+      stopLoading();
     }
   }, []);
 
   const update = useCallback(async (id, data) => {
-    setLoading(true);
+    startLoading();
     setError(null);
     try {
-      await updateBiodata(id, data);
+      return await apiUpdateBiodata(id, data);
     } catch (err) {
       setError(err.message);
       throw err;
     } finally {
-      setLoading(false);
+      stopLoading();
     }
   }, []);
 
   const remove = useCallback(async (id) => {
-    setLoading(true);
+    startLoading();
     setError(null);
     try {
-      await deleteBiodata(id);
+      await apiDeleteBiodata(id);
     } catch (err) {
       setError(err.message);
       throw err;
     } finally {
-      setLoading(false);
+      stopLoading();
     }
   }, []);
 
-  return { loading, error, create, fetchById, fetchByUser, fetchPublic, update, remove };
+  return {
+    loading: loadingCount > 0,
+    error,
+    create,
+    fetchById,
+    fetchPrivateById,
+    fetchByUser,
+    fetchPublic,
+    update,
+    remove,
+  };
 };

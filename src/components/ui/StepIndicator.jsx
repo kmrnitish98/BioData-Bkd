@@ -1,9 +1,11 @@
 import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
-
-const steps = ['Personal', 'Education', 'Family', 'Preferences', 'Photo'];
+import { useLang } from '../../context/LanguageContext';
 
 const StepIndicator = ({ currentStep }) => {
+  const { t } = useLang();
+  const steps = t('stepLabels') || ['Personal', 'Education', 'Family', 'Preferences', 'Gallery'];
+
   return (
     <div className="w-full mb-10">
       {/* Step Labels */}
@@ -11,9 +13,13 @@ const StepIndicator = ({ currentStep }) => {
         {steps.map((label, idx) => (
           <span
             key={idx}
-            className={`text-xs font-medium uppercase tracking-wide transition-colors duration-300 ${
+            className={`text-[10px] sm:text-xs font-medium uppercase tracking-wide transition-colors duration-300 ${
               idx + 1 <= currentStep ? 'text-yellow-400' : 'text-gray-600'
             }`}
+            style={{ fontFamily: typeof label === 'string' && /[\u0900-\u097F]/.test(label)
+              ? "'Noto Sans Devanagari', 'Mukta', sans-serif"
+              : 'inherit'
+            }}
           >
             {label}
           </span>

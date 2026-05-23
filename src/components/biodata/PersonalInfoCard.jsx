@@ -21,8 +21,8 @@ const PersonalInfoCard = ({ data = {} }) => {
 
   return (
     <Card delay={0.1}>
-      <Section icon={<Heart className="w-5 h-5" />} title="Personal Information" accent="gold">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      <Section icon={<Heart className="w-4 h-4 sm:w-5 sm:h-5" />} title="Personal Information" accent="gold">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
           {fullName && <IconText icon={<Users className="w-4 h-4" />} label="Full Name" value={fullName} />}
           {dob && <IconText icon={<Calendar className="w-4 h-4" />} label="Date of Birth" value={dob} />}
           {height && <IconText icon={<Ruler className="w-4 h-4" />} label="Height" value={height} />}
