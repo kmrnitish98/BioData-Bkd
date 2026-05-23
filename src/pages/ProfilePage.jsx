@@ -1,32 +1,256 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Share2, Printer, Download, Check, ArrowLeft, Heart, MessageCircle } from 'lucide-react';
-import jsPDF from 'jspdf';
+import { motion, AnimatePresence, useScroll, useSpring } from 'framer-motion';
+import {
+  Share2, Printer, Download, Check, ArrowLeft, Heart,
+  MessageCircle, ShieldCheck, Sparkles, Quote, ChevronUp, AlertCircle,
+} from 'lucide-react';
 import html2canvas from 'html2canvas';
-import { getBiodataById } from '../firebase/firestore';
+import { createPortal } from 'react-dom';
+import { apiGetBiodataById } from '../api/client';
 import HeroBanner from '../components/biodata/HeroBanner';
 import PersonalInfoCard from '../components/biodata/PersonalInfoCard';
 import EducationCard from '../components/biodata/EducationCard';
 import FamilyCard from '../components/biodata/FamilyCard';
+import BiodataPDFTemplate from '../components/biodata/BiodataPDFTemplate';
 import Card from '../components/ui/Card';
 import Section from '../components/ui/Section';
 import Loader from '../components/ui/Loader';
 import Button from '../components/ui/Button';
 
+/* ══════════════════════════════════════════════════════════════
+   PREMIUM PDF ENGINE — Production-Ready, Mobile-Friendly
+   ══════════════════════════════════════════════════════════════ */
+
+/* ─── Scroll Progress Bar ─────────────────────────── */
+const ScrollProgress = () => {
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
+  return (
+    <motion.div
+      className="fixed top-0 left-0 right-0 h-[2px] sm:h-[3px] z-[60] origin-left print:hidden"
+      style={{
+        scaleX,
+        background: 'linear-gradient(90deg, #8b6010, #d4a017, #ffcc33, #d4a017, #8b6010)',
+      }}
+    />
+  );
+};
+
+/* ─── Back to Top ─────────────────────────────────── */
+const BackToTop = () => {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const toggle = () => setVisible(window.scrollY > 600);
+    window.addEventListener('scroll', toggle, { passive: true });
+    return () => window.removeEventListener('scroll', toggle);
+  }, []);
+
+  return (
+    <AnimatePresence>
+      {visible && (
+        <motion.button
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="fixed bottom-20 sm:bottom-24 right-4 sm:right-6 z-50 p-2.5 sm:p-3 rounded-full glass-premium border border-yellow-700/30 text-yellow-500 hover:text-yellow-400 hover:border-yellow-600/50 transition-all duration-300 print:hidden cursor-pointer"
+          aria-label="Scroll to top"
+        >
+          <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5" />
+        </motion.button>
+      )}
+    </AnimatePresence>
+  );
+};
+
+/* ─── Section Divider ─────────────────────────────── */
+const SectionDivider = ({ icon = '✦', delay = 0 }) => (
+  <motion.div
+    initial={{ opacity: 0, scaleX: 0 }}
+    whileInView={{ opacity: 1, scaleX: 1 }}
+    viewport={{ once: true }}
+    transition={{ duration: 0.8, delay }}
+    className="flex items-center justify-center gap-3 sm:gap-4 py-2 sm:py-4"
+  >
+    <div className="flex-1 h-px bg-gradient-to-r from-transparent via-yellow-700/20 to-transparent" />
+    <motion.span
+      animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0.8, 0.4] }}
+      transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+      className="text-yellow-700/50 text-xs sm:text-sm"
+    >
+      {icon}
+    </motion.span>
+    <div className="flex-1 h-px bg-gradient-to-r from-transparent via-yellow-700/20 to-transparent" />
+  </motion.div>
+);
+
+/* ─── About Me Section ────────────────────────────── */
+const AboutSection = ({ bio }) => {
+  if (!bio) return null;
+  return (
+    <Card delay={0.05}>
+      <Section icon={<Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />} title="About Me" accent="gold">
+        <motion.p
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="text-sm sm:text-base md:text-lg text-gray-300/90 leading-relaxed sm:leading-loose font-light px-1 sm:px-2"
+          style={{ fontFamily: 'Cormorant Garamond, serif' }}
+        >
+          {bio}
+        </motion.p>
+      </Section>
+    </Card>
+  );
+};
+
+/* ─── Elegant Quote Section ───────────────────────── */
+const QuoteSection = () => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    whileInView={{ opacity: 1 }}
+    viewport={{ once: true }}
+    transition={{ duration: 1 }}
+    className="text-center py-8 sm:py-12 relative"
+  >
+    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+      <div className="w-[50vw] max-w-[400px] h-32 rounded-full bg-yellow-700/5 blur-[60px]" />
+    </div>
+    <motion.div
+      initial={{ scale: 0.8, opacity: 0 }}
+      whileInView={{ scale: 1, opacity: 1 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.6 }}
+      className="relative"
+    >
+      <Quote className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-700/30 mx-auto mb-3 sm:mb-4 rotate-180" />
+    </motion.div>
+    <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+      <div className="h-px w-10 sm:w-16 bg-gradient-to-r from-transparent to-yellow-700/40" />
+      <span className="text-yellow-700 text-base sm:text-xl animate-sparkle">✦</span>
+      <div className="h-px w-10 sm:w-16 bg-gradient-to-l from-transparent to-yellow-700/40" />
+    </div>
+    <p
+      className="text-gray-400/80 italic text-sm sm:text-base leading-relaxed max-w-sm sm:max-w-md mx-auto relative px-6"
+      style={{ fontFamily: 'Cormorant Garamond, serif' }}
+    >
+      "Looking for an auspicious alliance built on mutual respect, love, and shared values."
+    </p>
+  </motion.div>
+);
+
+/* ─── Premium Footer ──────────────────────────────── */
+const PremiumFooter = () => (
+  <footer className="relative border-t border-red-900/20 py-8 sm:py-12 text-center print:hidden overflow-hidden">
+    <div className="absolute inset-0 bg-gradient-to-t from-[#050000] to-transparent pointer-events-none" />
+    <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6">
+      <motion.div
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        className="flex items-center justify-center gap-2 sm:gap-3 mb-4 sm:mb-6"
+      >
+        <div className="h-px w-12 sm:w-20 bg-gradient-to-r from-transparent to-yellow-700/30" />
+        <span className="text-yellow-700/50 text-sm sm:text-base">❧</span>
+        <div className="h-px w-12 sm:w-20 bg-gradient-to-l from-transparent to-yellow-700/30" />
+      </motion.div>
+      <p
+        className="text-yellow-700/40 text-base sm:text-lg tracking-[0.15em] sm:tracking-[0.2em] mb-1 sm:mb-2"
+        style={{ fontFamily: 'Cinzel, Playfair Display, serif' }}
+      >
+        ✦ BioData ✦
+      </p>
+      <p className="text-gray-600 text-[10px] sm:text-xs tracking-wider">
+        © {new Date().getFullYear()} BioData. Crafted with elegance & love.
+      </p>
+    </div>
+  </footer>
+);
+
+/* ─── PDF Loading Overlay ─────────────────────────── */
+const PdfLoadingOverlay = ({ visible, stage }) => (
+  <AnimatePresence>
+    {visible && (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/85 backdrop-blur-sm print:hidden"
+      >
+        <div className="flex flex-col items-center gap-5">
+          {/* Spinning ring */}
+          <div className="relative w-16 h-16">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+              className="absolute inset-0 rounded-full border-2 border-yellow-700/25 border-t-yellow-500"
+            />
+            <div className="absolute inset-3 rounded-full border border-yellow-700/15" />
+            <div className="absolute inset-0 flex items-center justify-center text-yellow-600/70 text-lg">✦</div>
+          </div>
+          <div className="text-center space-y-1">
+            <p className="text-yellow-500 text-lg font-light tracking-widest"
+              style={{ fontFamily: 'Cinzel, Playfair Display, serif' }}>
+              Generating PDF
+            </p>
+            <p className="text-gray-400 text-xs tracking-wider">{stage || 'Preparing your biodata…'}</p>
+          </div>
+          {/* Progress dots */}
+          <div className="flex gap-1.5">
+            {[0,1,2].map(i => (
+              <motion.div key={i}
+                className="w-1.5 h-1.5 rounded-full bg-yellow-600/50"
+                animate={{ opacity: [0.3, 1, 0.3] }}
+                transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.3 }}
+              />
+            ))}
+          </div>
+        </div>
+      </motion.div>
+    )}
+  </AnimatePresence>
+);
+
+/* ─── Error Toast ─────────────────────────────────── */
+const ErrorToast = ({ message, onClose }) => (
+  <AnimatePresence>
+    {message && (
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 50 }}
+        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-3 px-5 py-3 rounded-xl glass-premium border border-red-800/40 shadow-luxury"
+      >
+        <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+        <p className="text-sm text-gray-200">{message}</p>
+        <button onClick={onClose} className="text-gray-500 hover:text-gray-300 ml-2">✕</button>
+      </motion.div>
+    )}
+  </AnimatePresence>
+);
+
+/* ═══════════════════════════════════════════════════ */
+/* ─── PROFILE PAGE ─────────────────────────────────── */
+/* ═══════════════════════════════════════════════════ */
+
 const ProfilePage = () => {
   const { id } = useParams();
-  const [biodata, setBiodata] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [biodata, setBiodata]       = useState(null);
+  const [loading, setLoading]       = useState(true);
+  const [notFound, setNotFound]     = useState(false);
+  const [copied, setCopied]         = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
-  const profileRef = useRef(null);
+  const [pdfStage, setPdfStage]     = useState('');
+  const [pdfError, setPdfError]     = useState('');
+  const profileRef     = useRef(null);
+  const pdfTemplateRef = useRef(null);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const data = await getBiodataById(id);
+        const data = await apiGetBiodataById(id);
         if (!data) setNotFound(true);
         else setBiodata(data);
       } catch {
@@ -38,205 +262,458 @@ const ProfilePage = () => {
     load();
   }, [id]);
 
-  const handleCopyLink = async () => {
-    await navigator.clipboard.writeText(window.location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handlePrint = () => window.print();
-
-  const handleDownloadPDF = async () => {
-    if (!profileRef.current) return;
-    setPdfLoading(true);
+  const handleCopyLink = useCallback(async () => {
     try {
-      const canvas = await html2canvas(profileRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#0a0000',
-        logging: false,
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
+  }, []);
+
+  const handlePrint = useCallback(() => {
+    window.print();
+  }, []);
+
+  /* ─── Premium HD Multi-Page PDF Generation ──────── */
+  const handleDownloadPDF = useCallback(async () => {
+    if (!pdfTemplateRef.current) return;
+    setPdfLoading(true);
+    setPdfError('');
+    setPdfStage('Preparing layout…');
+
+    const templateEl = pdfTemplateRef.current;
+
+    // Snapshot original styles
+    const origStyles = {
+      display:    templateEl.style.display,
+      visibility: templateEl.style.visibility,
+      position:   templateEl.style.position,
+      top:        templateEl.style.top,
+      left:       templateEl.style.left,
+      zIndex:     templateEl.style.zIndex,
+      width:      templateEl.style.width,
+      height:     templateEl.style.height,
+      overflow:   templateEl.style.overflow,
+    };
+
+    const restoreStyles = () => Object.assign(templateEl.style, origStyles);
+
+    try {
+      // 1. Mount at A4 render width (794px = 96dpi equivalent)
+      Object.assign(templateEl.style, {
+        display:    'block',
+        visibility: 'visible',
+        position:   'fixed',
+        top:        '0',
+        left:       '0',
+        zIndex:     '-9999',
+        width:      '794px',
+        height:     'auto',
+        overflow:   'visible',
       });
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      let position = 0;
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      if (pdfHeight <= pageHeight) {
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      } else {
-        while (position < pdfHeight) {
-          pdf.addImage(imgData, 'PNG', 0, -position, pdfWidth, pdfHeight);
-          position += pageHeight;
-          if (position < pdfHeight) pdf.addPage();
-        }
+
+      // 2. Wait for fonts + images + layout reflow
+      setPdfStage('Loading fonts & images…');
+      if (document.fonts?.ready) await document.fonts.ready;
+      await new Promise(r => setTimeout(r, 1200));
+
+      // 3. Detect if images are all loaded
+      const imgEls = templateEl.querySelectorAll('img');
+      await Promise.all(Array.from(imgEls).map(img =>
+        img.complete ? Promise.resolve() : new Promise(r => { img.onload = r; img.onerror = r; })
+      ));
+
+      setPdfStage('Rendering pages…');
+
+      // 4. Capture full content
+      const canvas = await html2canvas(templateEl, {
+        scale: 3,                       // 3x = crisp but not bloated
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#120000',
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: 794,
+        windowHeight: templateEl.scrollHeight,
+        logging: false,
+        imageTimeout: 15000,
+        onclone: (clonedDoc) => {
+          // Force background rendering in cloned document
+          clonedDoc.querySelectorAll('*').forEach(el => {
+            if (el.style) {
+              el.style.webkitPrintColorAdjust = 'exact';
+              el.style.printColorAdjust = 'exact';
+            }
+          });
+        },
+      });
+
+      setPdfStage('Building PDF…');
+
+      // 5. Dynamic import jsPDF to reduce initial bundle size
+      const { default: jsPDF } = await import('jspdf');
+
+      const A4_W_MM = 210;
+      const A4_H_MM = 297;
+
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+        compress: true,
+      });
+
+      // 6. Multi-page slicing
+      const imgWidthPx   = canvas.width;
+      const imgHeightPx  = canvas.height;
+      const pageHeightPx = Math.floor(imgWidthPx * (A4_H_MM / A4_W_MM));
+
+      let heightLeftPx = imgHeightPx;
+      let positionPx   = 0;
+      let pageNum      = 0;
+
+      while (heightLeftPx > 0) {
+        if (pageNum > 0) pdf.addPage();
+
+        const sliceH = Math.min(pageHeightPx, heightLeftPx);
+
+        // Slice canvas
+        const pageCanvas = document.createElement('canvas');
+        pageCanvas.width  = imgWidthPx;
+        pageCanvas.height = sliceH;
+
+        const ctx = pageCanvas.getContext('2d');
+        ctx.fillStyle = '#120000';
+        ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+        ctx.drawImage(canvas, 0, positionPx, imgWidthPx, sliceH, 0, 0, imgWidthPx, sliceH);
+
+        const imgData     = pageCanvas.toDataURL('image/jpeg', 0.88);
+        const sliceHMm    = (sliceH / imgWidthPx) * A4_W_MM;
+
+        pdf.addImage(imgData, 'JPEG', 0, 0, A4_W_MM, sliceHMm, undefined, 'FAST');
+
+        heightLeftPx -= pageHeightPx;
+        positionPx   += pageHeightPx;
+        pageNum++;
       }
-      const name = biodata?.personalInfo?.fullName?.replace(/\s+/g, '_') || 'Biodata';
-      pdf.save(`${name}_Biodata.pdf`);
+
+      restoreStyles();
+
+      setPdfStage('Saving…');
+      const safeName = (biodata?.personalInfo?.fullName || 'Biodata')
+        .replace(/[^a-zA-Z0-9\s]/g, '')
+        .replace(/\s+/g, '_');
+      pdf.save(`${safeName}_BioData.pdf`);
+
     } catch (err) {
-      console.error(err);
+      console.error('PDF generation error:', err);
+      restoreStyles();
+      setPdfError('PDF generation failed. Please try again or use the Print option.');
     } finally {
       setPdfLoading(false);
+      setPdfStage('');
     }
-  };
+  }, [biodata]);
 
-  if (loading) return <Loader message="Loading Biodata..." />;
+  /* ─── Loading & Not Found States ────────────────── */
+  if (loading) return <Loader message="Loading Biodata…" />;
 
   if (notFound) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center pt-20 px-6 text-center">
-        <Heart className="w-16 h-16 text-red-900/40 mx-auto mb-4" />
-        <h1 className="text-3xl text-white font-light mb-2" style={{ fontFamily: 'Playfair Display, serif' }}>
-          Biodata Not Found
-        </h1>
-        <p className="text-gray-600 mb-6">This profile may have been removed or marked private.</p>
-        <Link to="/">
-          <Button variant="ghost">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Home
-          </Button>
-        </Link>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6 }}
+          className="flex flex-col items-center"
+        >
+          <Heart className="w-12 h-12 sm:w-16 sm:h-16 text-red-900/40 mx-auto mb-4" />
+          <h1
+            className="text-2xl sm:text-3xl text-white font-light mb-2"
+            style={{ fontFamily: 'Cinzel, Playfair Display, serif' }}
+          >
+            Biodata Not Found
+          </h1>
+          <p className="text-gray-400 mb-6 text-sm sm:text-base">
+            This profile may have been removed or marked private.
+          </p>
+          <Link to="/">
+            <Button variant="ghost">
+              <ArrowLeft className="w-4 h-4" />
+              Back to Home
+            </Button>
+          </Link>
+        </motion.div>
       </div>
     );
   }
 
-  const { personalInfo = {}, educationInfo = {}, familyInfo = {}, preferences = {}, photoURL } = biodata;
+  const { personalInfo = {}, educationInfo = {}, familyInfo = {}, preferences = {} } = biodata;
+  const photoURL = biodata.photoURL || personalInfo.photoURL || null;
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.15, delayChildren: 0.1 } },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
+  };
 
   return (
-    <div className="min-h-screen">
-      {/* Fixed Action Bar */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1 }}
-        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 print:hidden"
+    <div className="min-h-screen noise-overlay relative">
+
+      {/* ─── Overlays ───────────────────────────────── */}
+      <PdfLoadingOverlay visible={pdfLoading} stage={pdfStage} />
+      <ErrorToast message={pdfError} onClose={() => setPdfError('')} />
+
+      {/* ─── Hidden PDF Capture Template ────────────── */}
+      {/*
+        IMPORTANT: This div is hidden off-screen but fully rendered.
+        During PDF export, we temporarily make it visible at 794px.
+      */}
+      <div
+        ref={pdfTemplateRef}
+        aria-hidden="true"
+        style={{
+          display: 'none',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          zIndex: -9999,
+          visibility: 'hidden',
+          width: '794px',
+          pointerEvents: 'none',
+        }}
       >
-        <div className="flex items-center gap-2 glass border border-yellow-900/30 rounded-full px-4 py-2.5 shadow-2xl">
-          <Link to="/">
-            <Button variant="ghost" size="sm" className="rounded-full !px-3">
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-          </Link>
-
-          <div className="h-4 w-px bg-red-900/40" />
-
-          <Button variant="ghost" size="sm" onClick={handleCopyLink} className="rounded-full !px-3 gap-1.5">
-            {copied ? <Check className="w-4 h-4 text-green-400" /> : <Share2 className="w-4 h-4" />}
-            <span className="text-xs">{copied ? 'Copied!' : 'Share'}</span>
-          </Button>
-
-          <Button variant="ghost" size="sm" onClick={handlePrint} className="rounded-full !px-3 gap-1.5">
-            <Printer className="w-4 h-4" />
-            <span className="text-xs">Print</span>
-          </Button>
-
-          <Button variant="gold" size="sm" onClick={handleDownloadPDF} loading={pdfLoading} className="rounded-full !px-4 gap-1.5">
-            <Download className="w-4 h-4" />
-            <span className="text-xs">PDF</span>
-          </Button>
-        </div>
-      </motion.div>
-
-      {/* Printable / PDF Content */}
-      <div ref={profileRef}>
-        {/* Hero Banner */}
-        <div className="pt-16">
-          <HeroBanner
-            name={personalInfo.fullName}
-            tagline={preferences.bio || 'Seeking a loving and caring life partner.'}
-            photoURL={photoURL}
-          />
-        </div>
-
-        {/* Cards */}
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
-          <PersonalInfoCard data={personalInfo} />
-          <EducationCard data={educationInfo} />
-          <FamilyCard data={familyInfo} />
-
-          {/* Preferences Card */}
-          {(preferences.partnerExpectations || preferences.hobbies || preferences.preferredLocation) && (
-            <Card delay={0.4}>
-              <Section icon={<Heart className="w-5 h-5" />} title="Preferences" accent="gold">
-                <div className="space-y-4">
-                  {preferences.partnerExpectations && (
-                    <div>
-                      <p className="text-xs text-yellow-600/70 uppercase tracking-widest font-medium mb-1">Partner Expectations</p>
-                      <p className="text-gray-300 leading-relaxed">{preferences.partnerExpectations}</p>
-                    </div>
-                  )}
-                  {preferences.hobbies && (
-                    <div>
-                      <p className="text-xs text-yellow-600/70 uppercase tracking-widest font-medium mb-1">Hobbies & Interests</p>
-                      <p className="text-gray-300">{preferences.hobbies}</p>
-                    </div>
-                  )}
-                  {preferences.preferredLocation && (
-                    <div>
-                      <p className="text-xs text-yellow-600/70 uppercase tracking-widest font-medium mb-1">Preferred Location</p>
-                      <p className="text-gray-300">{preferences.preferredLocation}</p>
-                    </div>
-                  )}
-                </div>
-              </Section>
-            </Card>
-          )}
-
-          {/* Contact Card */}
-          {preferences.contactName && (
-            <Card delay={0.5}>
-              <Section icon={<MessageCircle className="w-5 h-5" />} title="Contact Information" accent="red">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-xs text-yellow-600/70 uppercase tracking-widest font-medium mb-1">Contact Person</p>
-                    <p className="text-white font-semibold">{preferences.contactName}</p>
-                  </div>
-                  {preferences.contactPhone && (
-                    <div>
-                      <p className="text-xs text-yellow-600/70 uppercase tracking-widest font-medium mb-1">Phone</p>
-                      <a href={`tel:${preferences.contactPhone}`} className="text-yellow-400 hover:text-yellow-300 transition-colors font-medium">
-                        {preferences.contactPhone}
-                      </a>
-                    </div>
-                  )}
-                  {preferences.contactEmail && (
-                    <div>
-                      <p className="text-xs text-yellow-600/70 uppercase tracking-widest font-medium mb-1">Email</p>
-                      <a href={`mailto:${preferences.contactEmail}`} className="text-yellow-400 hover:text-yellow-300 transition-colors">
-                        {preferences.contactEmail}
-                      </a>
-                    </div>
-                  )}
-                </div>
-              </Section>
-            </Card>
-          )}
-
-          {/* Quote */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 1 }}
-            className="text-center py-8"
-          >
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <div className="h-px w-16 bg-gradient-to-r from-transparent to-yellow-700/40" />
-              <span className="text-yellow-700 text-xl">✦</span>
-              <div className="h-px w-16 bg-gradient-to-l from-transparent to-yellow-700/40" />
-            </div>
-            <p className="text-gray-500 italic text-sm leading-relaxed max-w-md mx-auto">
-              "Looking for an auspicious alliance built on mutual respect, love, and shared values."
-            </p>
-          </motion.div>
-        </main>
+        <BiodataPDFTemplate biodata={biodata} />
       </div>
 
-      {/* Footer */}
-      <footer className="border-t border-red-900/30 py-8 text-center glass print:hidden">
-        <p className="text-yellow-700/50 text-sm" style={{ fontFamily: 'Playfair Display, serif' }}>✦ BioData ✦</p>
-        <p className="text-gray-700 text-xs mt-1">© {new Date().getFullYear()} BioData. Designed with elegance.</p>
-      </footer>
+      {/* ─── Scroll Progress ─────────────────────────── */}
+      <ScrollProgress />
+      <BackToTop />
+
+      {/* ─── Ambient Background ──────────────────────── */}
+      <div className="fixed inset-0 pointer-events-none z-0 print:hidden">
+        <div className="absolute top-0 right-0 w-[60vw] h-[60vh] bg-red-900/5 blur-[150px] rounded-full" />
+        <div className="absolute bottom-0 left-0 w-[50vw] h-[50vh] bg-yellow-900/3 blur-[120px] rounded-full" />
+      </div>
+
+      {/* ─── Fixed Back Button ───────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 1, duration: 0.6 }}
+        className="fixed top-6 left-4 sm:left-6 z-50 print:hidden"
+      >
+        <Link to="/">
+          <Button variant="ghost" size="sm" className="glass-premium rounded-full !px-3 shadow-luxury backdrop-blur-md bg-black/20">
+            <ArrowLeft className="w-4 h-4" />
+            <span className="hidden sm:inline ml-1 text-xs">Back</span>
+          </Button>
+        </Link>
+      </motion.div>
+
+      {/* ─── Main Viewable Content ───────────────────── */}
+      <div ref={profileRef} className="relative z-10">
+
+        {/* Hero Banner */}
+        <HeroBanner
+          name={personalInfo.fullName}
+          tagline={preferences.bio || 'Seeking a loving and caring life partner.'}
+          photoURL={photoURL}
+          photos={
+            (biodata?.photos?.length > 0)
+              ? biodata.photos.map(p => p?.url || p)
+              : photoURL ? [photoURL] : []
+          }
+          onShare={handleCopyLink}
+          onPrint={handlePrint}
+          onDownload={handleDownloadPDF}
+          pdfLoading={pdfLoading}
+          copied={copied}
+        />
+
+        {/* Detail Cards */}
+        <motion.main
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-100px' }}
+          className="max-w-4xl 3xl:max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12 space-y-4 sm:space-y-6 lg:space-y-8"
+        >
+          {/* About Me */}
+          <motion.div variants={itemVariants}>
+            <AboutSection bio={preferences.bio} />
+          </motion.div>
+
+          <SectionDivider icon="❧" />
+
+          {/* Personal Information */}
+          <motion.div variants={itemVariants}>
+            <PersonalInfoCard data={personalInfo} />
+          </motion.div>
+
+          <SectionDivider icon="✦" delay={0.1} />
+
+          {/* Education */}
+          <motion.div variants={itemVariants}>
+            <EducationCard data={educationInfo} />
+          </motion.div>
+
+          <SectionDivider icon="❧" delay={0.2} />
+
+          {/* Family */}
+          <motion.div variants={itemVariants}>
+            <FamilyCard data={familyInfo} />
+          </motion.div>
+
+          <SectionDivider icon="✦" delay={0.3} />
+
+          {/* Preferences */}
+          {(preferences.partnerExpectations || preferences.hobbies || preferences.preferredLocation) && (
+            <motion.div variants={itemVariants}>
+              <Card delay={0.4}>
+                <Section
+                  icon={<Heart className="w-4 h-4 sm:w-5 sm:h-5" />}
+                  title="Preferences"
+                  accent="gold"
+                >
+                  <div className="space-y-4 sm:space-y-5">
+                    {preferences.partnerExpectations && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        <p className="text-[10px] sm:text-xs text-yellow-600/70 uppercase tracking-[0.15em] sm:tracking-widest font-medium mb-1">
+                          Partner Expectations
+                        </p>
+                        <p className="text-sm sm:text-base text-gray-300 leading-relaxed">
+                          {preferences.partnerExpectations}
+                        </p>
+                      </motion.div>
+                    )}
+                    {preferences.hobbies && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.5, delay: 0.1 }}
+                      >
+                        <p className="text-[10px] sm:text-xs text-yellow-600/70 uppercase tracking-[0.15em] sm:tracking-widest font-medium mb-1">
+                          Hobbies & Interests
+                        </p>
+                        <p className="text-sm sm:text-base text-gray-300">{preferences.hobbies}</p>
+                      </motion.div>
+                    )}
+                    {preferences.preferredLocation && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.5, delay: 0.2 }}
+                      >
+                        <p className="text-[10px] sm:text-xs text-yellow-600/70 uppercase tracking-[0.15em] sm:tracking-widest font-medium mb-1">
+                          Preferred Location
+                        </p>
+                        <p className="text-sm sm:text-base text-gray-300">{preferences.preferredLocation}</p>
+                      </motion.div>
+                    )}
+                  </div>
+                </Section>
+              </Card>
+            </motion.div>
+          )}
+
+          <SectionDivider icon="✦" delay={0.4} />
+
+          {/* Contact */}
+          {preferences.contactName && (
+            <motion.div variants={itemVariants}>
+              <Card delay={0.5}>
+                <Section
+                  icon={<MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />}
+                  title="Contact Information"
+                  accent="red"
+                >
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    <motion.div
+                      initial={{ opacity: 0, x: -10 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.4 }}
+                    >
+                      <p className="text-[10px] sm:text-xs text-yellow-600/70 uppercase tracking-[0.15em] sm:tracking-widest font-medium mb-1">
+                        Contact Person
+                      </p>
+                      <p className="text-white font-semibold text-sm sm:text-base">
+                        {preferences.contactName}
+                      </p>
+                    </motion.div>
+                    {preferences.contactPhone && (
+                      <motion.div
+                        initial={{ opacity: 0, x: -10 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.4, delay: 0.1 }}
+                      >
+                        <p className="text-[10px] sm:text-xs text-yellow-600/70 uppercase tracking-[0.15em] sm:tracking-widest font-medium mb-1">
+                          Phone
+                        </p>
+                        <a
+                          href={`tel:${preferences.contactPhone}`}
+                          className="text-yellow-400 hover:text-yellow-300 transition-colors duration-300 font-medium text-sm sm:text-base"
+                        >
+                          {preferences.contactPhone}
+                        </a>
+                      </motion.div>
+                    )}
+                    {preferences.contactEmail && (
+                      <motion.div
+                        initial={{ opacity: 0, x: -10 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.4, delay: 0.2 }}
+                        className="sm:col-span-2"
+                      >
+                        <p className="text-[10px] sm:text-xs text-yellow-600/70 uppercase tracking-[0.15em] sm:tracking-widest font-medium mb-1">
+                          Email
+                        </p>
+                        <a
+                          href={`mailto:${preferences.contactEmail}`}
+                          className="text-yellow-400 hover:text-yellow-300 transition-colors duration-300 text-sm sm:text-base break-all"
+                        >
+                          {preferences.contactEmail}
+                        </a>
+                      </motion.div>
+                    )}
+                  </div>
+                </Section>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* Closing Quote */}
+          <QuoteSection />
+        </motion.main>
+      </div>
+
+      {/* ─── Premium Footer ──────────────────────────── */}
+      <PremiumFooter />
+
+      {/* ─── Print Portal — targets #print-biodata-root in index.html ── */}
+      {typeof document !== 'undefined' && (() => {
+        const printRoot = document.getElementById('print-biodata-root');
+        return printRoot ? createPortal(
+          <BiodataPDFTemplate biodata={biodata} />,
+          printRoot
+        ) : null;
+      })()}
     </div>
   );
 };

@@ -12,30 +12,42 @@ const DashboardPage = () => {
   const [biodatas, setBiodatas] = useState([]);
   const [deletingId, setDeletingId] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [actionError, setActionError] = useState(null);
 
   useEffect(() => {
-    if (currentUser) {
-      fetchByUser(currentUser.uid).then(setBiodatas).catch(() => setBiodatas([]));
-    }
-  }, [currentUser, fetchByUser]);
+    // fetchByUser no longer needs userId — server reads it from JWT
+    fetchByUser().then(setBiodatas).catch(() => setBiodatas([]));
+  }, [fetchByUser]);
 
   const handleTogglePublic = async (id, current) => {
+    // Optimistic update
+    setBiodatas((prev) =>
+      prev.map((b) => (b._id === id ? { ...b, isPublic: !current } : b))
+    );
+    setActionError(null);
     try {
       await update(id, { isPublic: !current });
+    } catch (err) {
+      // Rollback on failure
       setBiodatas((prev) =>
-        prev.map((b) => (b.id === id ? { ...b, isPublic: !current } : b))
+        prev.map((b) => (b._id === id ? { ...b, isPublic: current } : b))
       );
-    } catch {}
+      setActionError('Failed to update visibility. Please try again.');
+    }
   };
 
   const handleDelete = async (id) => {
     setDeletingId(id);
+    setActionError(null);
     try {
       await remove(id);
-      setBiodatas((prev) => prev.filter((b) => b.id !== id));
-    } catch {}
-    setDeletingId(null);
-    setConfirmDelete(null);
+      setBiodatas((prev) => prev.filter((b) => b._id !== id));
+    } catch (err) {
+      setActionError('Failed to delete biodata. Please try again.');
+    } finally {
+      setDeletingId(null);
+      setConfirmDelete(null);
+    }
   };
 
   return (
@@ -59,8 +71,8 @@ const DashboardPage = () => {
                 My <span className="text-yellow-400">Biodatas</span>
               </h1>
             </div>
-            <p className="text-gray-600 text-sm">
-              Welcome back, {currentUser?.displayName || 'User'} · {biodatas.length} biodata{biodatas.length !== 1 ? 's' : ''}
+            <p className="text-gray-400 text-sm">
+              Welcome back, {currentUser?.name || 'User'} · {biodatas.length} biodata{biodatas.length !== 1 ? 's' : ''}
             </p>
           </div>
           <Link to="/create">
@@ -70,6 +82,25 @@ const DashboardPage = () => {
             </Button>
           </Link>
         </motion.div>
+
+        {/* Action error banner */}
+        {actionError && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 flex items-center gap-2 px-4 py-3 rounded-xl bg-red-950/60 border border-red-800/40 text-red-300 text-sm"
+          >
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+            {actionError}
+            <button
+              onClick={() => setActionError(null)}
+              className="ml-auto text-red-400 hover:text-white transition-colors"
+              aria-label="Dismiss error"
+            >
+              ×
+            </button>
+          </motion.div>
+        )}
 
         {/* Empty State */}
         {!loading && biodatas.length === 0 && (
@@ -84,7 +115,7 @@ const DashboardPage = () => {
             <h2 className="text-xl text-white font-light mb-2" style={{ fontFamily: 'Playfair Display, serif' }}>
               No Biodatas Yet
             </h2>
-            <p className="text-gray-600 text-sm mb-6">
+            <p className="text-gray-400 text-sm mb-6">
               Create your first beautiful marriage biodata in minutes.
             </p>
             <Link to="/create">
@@ -109,11 +140,11 @@ const DashboardPage = () => {
             const name = biodata.personalInfo?.fullName || 'Unnamed';
             const city = biodata.personalInfo?.city || '';
             const education = biodata.educationInfo?.highestQualification || '';
-            const initials = name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
+            const initials = name.split(' ').filter(Boolean).map((n) => n[0]).join('').slice(0, 2).toUpperCase();
 
             return (
               <motion.div
-                key={biodata.id}
+                key={biodata._id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.08 }}
@@ -125,10 +156,10 @@ const DashboardPage = () => {
                     <img
                       src={biodata.photoURL}
                       alt={name}
-                      className="w-14 h-14 rounded-full object-cover border-2 border-yellow-700/30"
+                      className="w-12 h-16 rounded-md object-cover border-2 border-yellow-700/30"
                     />
                   ) : (
-                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-red-900 to-[#200000] border-2 border-yellow-700/20 flex items-center justify-center">
+                    <div className="w-12 h-16 rounded-md bg-gradient-to-br from-red-900 to-[#200000] border-2 border-yellow-700/20 flex items-center justify-center">
                       <span className="text-lg font-bold text-yellow-500" style={{ fontFamily: 'Playfair Display, serif' }}>
                         {initials}
                       </span>
@@ -144,7 +175,6 @@ const DashboardPage = () => {
                       {education && <span className="truncate">{education}</span>}
                     </div>
                   </div>
-                  {/* Public badge */}
                   <span className={`flex-shrink-0 flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border ${biodata.isPublic ? 'bg-yellow-900/20 border-yellow-800/40 text-yellow-500' : 'bg-gray-900/40 border-gray-800/40 text-gray-500'}`}>
                     {biodata.isPublic ? <Globe className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
                     {biodata.isPublic ? 'Public' : 'Private'}
@@ -154,23 +184,28 @@ const DashboardPage = () => {
                 {/* Actions */}
                 <div className="flex items-center justify-between px-6 py-4 gap-3">
                   <div className="flex gap-2">
-                    <Link to={`/profile/${biodata.id}`}>
+                    <Link to={`/profile/${biodata._id}`}>
                       <Button variant="ghost" size="sm">
                         <Eye className="w-4 h-4" />
                         View
                       </Button>
                     </Link>
+                    <Link to={`/edit/${biodata._id}`}>
+                      <Button variant="ghost" size="sm">
+                        Edit
+                      </Button>
+                    </Link>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleTogglePublic(biodata.id, biodata.isPublic)}
+                      onClick={() => handleTogglePublic(biodata._id, biodata.isPublic)}
                     >
                       {biodata.isPublic ? <Lock className="w-4 h-4" /> : <Globe className="w-4 h-4" />}
                       {biodata.isPublic ? 'Make Private' : 'Make Public'}
                     </Button>
                   </div>
 
-                  {confirmDelete === biodata.id ? (
+                  {confirmDelete === biodata._id ? (
                     <div className="flex items-center gap-2">
                       <span className="text-red-400 text-xs flex items-center gap-1">
                         <AlertTriangle className="w-3 h-3" /> Confirm?
@@ -178,8 +213,8 @@ const DashboardPage = () => {
                       <Button
                         variant="danger"
                         size="sm"
-                        loading={deletingId === biodata.id}
-                        onClick={() => handleDelete(biodata.id)}
+                        loading={deletingId === biodata._id}
+                        onClick={() => handleDelete(biodata._id)}
                       >
                         Yes, Delete
                       </Button>
@@ -188,7 +223,7 @@ const DashboardPage = () => {
                       </Button>
                     </div>
                   ) : (
-                    <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(biodata.id)} className="text-red-700 hover:text-red-400">
+                    <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(biodata._id)} className="text-red-700 hover:text-red-400">
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   )}

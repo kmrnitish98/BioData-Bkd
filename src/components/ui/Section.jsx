@@ -11,21 +11,34 @@ const Section = ({ icon, title, children, className = '', accent = 'gold', delay
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-40px' }}
-      transition={{ duration: 0.7, delay, ease: 'easeOut' }}
-      className={`mb-10 ${className}`}
+      transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
+      className={`mb-8 sm:mb-10 ${className}`}
     >
       {/* Section Header */}
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-3 mb-5 sm:mb-6">
         {icon && (
-          <div className="p-2.5 rounded-xl bg-red-950/80 border border-yellow-700/30 text-yellow-500">
+          <motion.div
+            whileHover={{ scale: 1.1, rotate: 5 }}
+            transition={{ type: 'spring', stiffness: 300 }}
+            className="p-2 sm:p-2.5 rounded-xl bg-gradient-to-br from-red-950/80 to-red-900/40 border border-yellow-700/30 text-yellow-500 shadow-gold/20"
+          >
             {icon}
-          </div>
+          </motion.div>
         )}
-        <div>
-          <h2 className="text-2xl md:text-3xl font-semibold text-white tracking-wide" style={{ fontFamily: 'Playfair Display, serif' }}>
+        <div className="min-w-0">
+          <h2
+            className="text-responsive-section font-semibold text-white tracking-wide truncate"
+            style={{ fontFamily: 'Cormorant Garamond, Playfair Display, serif' }}
+          >
             {title}
           </h2>
-          <div className={`h-0.5 w-16 bg-gradient-to-r ${accentClasses[accent]} mt-1 rounded-full`} />
+          <motion.div
+            initial={{ scaleX: 0 }}
+            whileInView={{ scaleX: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className={`h-0.5 w-12 sm:w-16 bg-gradient-to-r ${accentClasses[accent]} mt-1 rounded-full origin-left`}
+          />
         </div>
       </div>
       {children}
