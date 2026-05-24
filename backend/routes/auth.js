@@ -71,14 +71,11 @@ router.post('/google', async (req, res) => {
     const { token } = req.body;
     if (!token) return res.status(400).json({ message: 'No Google token provided' });
 
-    const { OAuth2Client } = require('google-auth-library');
-    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-    const ticket = await client.verifyIdToken({
-      idToken: token,
-      audience: process.env.GOOGLE_CLIENT_ID,
+    const axios = require('axios');
+    const { data } = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${token}` }
     });
-    const payload = ticket.getPayload();
-    const { sub: googleId, email, name, picture: avatar } = payload;
+    const { sub: googleId, email, name, picture: avatar } = data;
 
     let user = await User.findOne({ email });
     if (user) {
