@@ -43,6 +43,12 @@ export const apiSignUp = (name, email, password) =>
 export const apiLogin = (email, password) =>
   request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
 
+export const apiGoogleLogin = (token) =>
+  request('/auth/google', { method: 'POST', body: JSON.stringify({ token }) });
+
+export const apiFacebookLogin = (accessToken) =>
+  request('/auth/facebook', { method: 'POST', body: JSON.stringify({ accessToken }) });
+
 export const apiGetMe = () => request('/auth/me');
 
 // ── Biodata ───────────────────────────────────────────────────────────────────

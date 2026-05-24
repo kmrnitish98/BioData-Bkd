@@ -13,6 +13,7 @@ const allowedOrigins = [
   process.env.CLIENT_URL,          // e.g. http://localhost:5173 from .env
   /^http:\/\/localhost:\d+$/,       // any localhost:PORT in development
   /^http:\/\/127\.0\.0\.1:\d+$/,   // also 127.0.0.1:PORT
+  /^https:\/\/.*\.vercel\.app$/,    // allow Vercel preview and production domains
 ];
 
 app.use(cors({

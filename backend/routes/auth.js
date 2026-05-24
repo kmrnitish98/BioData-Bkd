@@ -65,6 +65,84 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// POST /api/auth/google
+router.post('/google', async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ message: 'No Google token provided' });
+
+    const { OAuth2Client } = require('google-auth-library');
+    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const { sub: googleId, email, name, picture: avatar } = payload;
+
+    let user = await User.findOne({ email });
+    if (user) {
+      if (!user.googleId) {
+        user.googleId = googleId;
+        if (!user.avatar) user.avatar = avatar;
+        await user.save();
+      }
+    } else {
+      user = await User.create({ name, email, googleId, avatar });
+    }
+
+    res.json({
+      token: generateToken(user._id),
+      user: { id: user._id, name: user.name, email: user.email, avatar: user.avatar },
+    });
+  } catch (err) {
+    console.error('[Auth] google login error:', err.message);
+    res.status(500).json({ message: 'Google login failed' });
+  }
+});
+
+// POST /api/auth/facebook
+router.post('/facebook', async (req, res) => {
+  try {
+    const { accessToken } = req.body;
+    if (!accessToken) return res.status(400).json({ message: 'No Facebook token provided' });
+
+    const axios = require('axios');
+    const { data } = await axios.get(`https://graph.facebook.com/me`, {
+      params: {
+        fields: 'id,name,email,picture.type(large)',
+        access_token: accessToken,
+      },
+    });
+
+    const { id: facebookId, email, name, picture } = data;
+    if (!email) {
+      return res.status(400).json({ message: 'Facebook account must have an email associated' });
+    }
+
+    const avatar = picture?.data?.url;
+
+    let user = await User.findOne({ email });
+    if (user) {
+      if (!user.facebookId) {
+        user.facebookId = facebookId;
+        if (!user.avatar && avatar) user.avatar = avatar;
+        await user.save();
+      }
+    } else {
+      user = await User.create({ name, email, facebookId, avatar });
+    }
+
+    res.json({
+      token: generateToken(user._id),
+      user: { id: user._id, name: user.name, email: user.email, avatar: user.avatar },
+    });
+  } catch (err) {
+    console.error('[Auth] facebook login error:', err.message);
+    res.status(500).json({ message: 'Facebook login failed' });
+  }
+});
+
 // GET /api/auth/me  — validate token and return current user
 router.get('/me', require('../middleware/auth').protect, (req, res) => {
   const u = req.user;

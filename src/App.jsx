@@ -1,5 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { LanguageProvider } from './context/LanguageContext';
 import Navbar from './components/layout/Navbar';
 import ProtectedRoute from './components/layout/ProtectedRoute';
@@ -44,10 +45,12 @@ const NotFoundPage = () => (
 );
 
 function App() {
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID_HERE';
   return (
-    <LanguageProvider>
-      <BrowserRouter>
-        <Navbar />
+    <GoogleOAuthProvider clientId={googleClientId}>
+      <LanguageProvider>
+        <BrowserRouter>
+          <Navbar />
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<HomePage />} />
@@ -91,7 +94,8 @@ function App() {
           </Routes>
         </Suspense>
       </BrowserRouter>
-    </LanguageProvider>
+      </LanguageProvider>
+    </GoogleOAuthProvider>
   );
 }
 
