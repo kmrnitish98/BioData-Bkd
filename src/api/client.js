@@ -46,8 +46,7 @@ export const apiLogin = (email, password) =>
 export const apiGoogleLogin = (token) =>
   request('/auth/google', { method: 'POST', body: JSON.stringify({ token }) });
 
-export const apiFacebookLogin = (accessToken) =>
-  request('/auth/facebook', { method: 'POST', body: JSON.stringify({ accessToken }) });
+
 
 export const apiGetMe = () => request('/auth/me');
 

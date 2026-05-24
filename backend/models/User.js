@@ -26,10 +26,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       sparse: true, // allows null for email users
     },
-    facebookId: {
-      type: String,
-      sparse: true,
-    },
+
     avatar: String, // URL to profile picture
   },
   { timestamps: true }
