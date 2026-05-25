@@ -1,5 +1,5 @@
 // Vercel Serverless Function for dynamic sitemap generation
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   try {
     const backendUrl = process.env.VITE_API_URL || 'https://aguaa-backend-production.up.railway.app';
     
@@ -43,4 +43,4 @@ module.exports = async (req, res) => {
     console.error('Sitemap error:', error);
     res.status(500).send('Internal Server Error');
   }
-};
+}
