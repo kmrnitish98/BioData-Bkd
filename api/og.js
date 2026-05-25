@@ -1,3 +1,4 @@
+/* global process */
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -65,7 +66,10 @@ export default async function handler(req, res) {
 
 function fallback(res) {
   try {
-    const indexPath = path.join(__dirname, '..', 'index.html');
+   const indexPath = path.join(process.cwd(), 'dist', 'index.html');
+   if (!fs.existsSync(indexPath)) {
+        return res.status(500).send('index.html not found');
+      }
     const html = fs.readFileSync(indexPath, 'utf8');
     res.setHeader('Content-Type', 'text/html');
     return res.status(200).send(html);
