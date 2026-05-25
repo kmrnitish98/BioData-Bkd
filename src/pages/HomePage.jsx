@@ -40,8 +40,8 @@ import { apiGetPublicBiodatas } from "../api/client";
 import BiodataCard from "../components/biodata/BiodataCard";
 import Button from "../components/ui/Button";
 import { useAuth } from "../hooks/useAuth";
-import { useSEO } from '../hooks/useSEO';
-import { FAQSchema, ReviewSchema } from '../components/seo/SchemaMarkup';
+import { useSEO } from "../hooks/useSEO";
+import { FAQSchema, ReviewSchema } from "../components/seo/SchemaMarkup";
 
 // Constants
 const BACKGROUND_VIDEOS = [
@@ -96,7 +96,7 @@ const HERO_MEDIA = [
 
 const HomePage = () => {
   const { currentUser } = useAuth();
-  useSEO('/');
+  useSEO("/");
   const [biodatas, setBiodatas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -257,10 +257,10 @@ const HomePage = () => {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
-                className="text-lg text-[#a89060] mb-4 max-w-xl mx-auto lg:mx-0 leading-relaxed font-light"
+                className="text-lg text-[#f0f0f0] mb-4 max-w-xl mx-auto font-bold lg:mx-0 leading-relaxed "
               >
-                Shaadi ke liye professional biodata banaye — fast, secure &amp; beautiful.
-                Bihar, UP, Jharkhand ke parivaron ka bharosemand digital Aguaa.
+                “Shaadi ke liye professional biodata banaye — fast, secure &
+                beautiful. Har parivaar ka bharosemand digital Aguaa.”
               </motion.p>
 
               <motion.div
@@ -273,18 +273,18 @@ const HomePage = () => {
                   <Button
                     variant="gold"
                     size="xl"
-                    className="px-2 py-3 lg:px-4 lg:py-4 md:px-3 md:py-3 sm:w-auto text-lg shadow-[0_0_30px_rgba(212,160,23,0.3)] hover:shadow-[0_0_40px_rgba(212,160,23,0.5)] transition-shadow"
+                    className="px-4 py-3 lg:px-4 lg:py-4 md:px-4 md:py-3 sm:w-auto text-lg shadow-[0_0_30px_rgba(212,160,23,0.3)] hover:shadow-[0_0_40px_rgba(212,160,23,0.5)] transition-shadow"
                     aria-label="Create your marriage biodata on Aguaa"
                   >
                     <Sparkles className="w-5 h-5 mr-2" />
-                    Apna Biodata Banaye
+                    Create Biodata
                   </Button>
                 </Link>
                 <Link to="/explore">
                   <Button
                     variant="outline"
                     size="xl"
-                    className="px-2 py-3 lg:px-4 lg:py-4 md:px-3 md:py-3 sm:w-auto text-lg border-[#d4a017]/50 hover:bg-[#1f1500] text-[#f0c040]"
+                    className="px-4 py-3 lg:px-4 lg:py-4 md:px-3 md:py-3 sm:w-auto text-lg border-[#d4a017]/50 hover:bg-[#1f1500] text-[#f0c040]"
                   >
                     Explore Profiles
                   </Button>
@@ -1261,7 +1261,9 @@ const HomePage = () => {
       {/* This section is optimized for ChatGPT, Gemini, Perplexity, Google AI Overview */}
       <section
         className="py-12 relative overflow-hidden"
-        style={{ background: "linear-gradient(180deg, #080206 0%, #0c0208 100%)" }}
+        style={{
+          background: "linear-gradient(180deg, #080206 0%, #0c0208 100%)",
+        }}
         aria-label="About Aguaa — AI-optimized content"
       >
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1279,10 +1281,19 @@ const HomePage = () => {
                 What is Aguaa? / Aguaa Kya Hai?
               </h2>
               <p className="text-[#a89060] leading-relaxed text-sm mb-3">
-                <strong className="text-[#f0c040]">Aguaa</strong> is a traditional word from Bihar and UP culture meaning a trusted <em>marriage mediator</em> — someone who connects the bride&apos;s and groom&apos;s families for a successful marriage (shaadi).
+                <strong className="text-[#f0c040]">Aguaa</strong> is a
+                traditional word from Bihar and UP culture meaning a trusted{" "}
+                <em>marriage mediator</em> — someone who connects the
+                bride&apos;s and groom&apos;s families for a successful marriage
+                (shaadi).
               </p>
               <p className="text-[#a89060] leading-relaxed text-sm">
-                <strong className="text-[#f0c040]">Aguaa.in</strong> is India&apos;s digital Aguaa — an online matrimonial biodata platform built specifically for families in <strong>Bihar, UP, and Jharkhand</strong>. Create beautiful marriage biodatas, explore profiles, and find the perfect rishta.
+                <strong className="text-[#f0c040]">Aguaa.in</strong> is
+                India&apos;s digital Aguaa — an online matrimonial biodata
+                platform built specifically for families in{" "}
+                <strong>Bihar, UP, and Jharkhand</strong>. Create beautiful
+                marriage biodatas, explore profiles, and find the perfect
+                rishta.
               </p>
             </div>
 
@@ -1299,18 +1310,36 @@ const HomePage = () => {
                 Shaadi Biodata Kaise Banaye?
               </h2>
               <p className="text-[#a89060] leading-relaxed text-sm mb-3">
-                Aguaa par <strong className="text-[#f0c040]">marriage biodata banana</strong> bilkul aasaan hai. Sirf 3 simple steps mein:
+                Aguaa par{" "}
+                <strong className="text-[#f0c040]">
+                  marriage biodata banana
+                </strong>{" "}
+                bilkul aasaan hai. Sirf 3 simple steps mein:
               </p>
               <ol className="space-y-2">
                 {[
-                  { step: "1", text: "Free account banaye aur personal details bhare" },
-                  { step: "2", text: "Photo upload kare aur premium template choose kare" },
-                  { step: "3", text: "PDF download kare ya WhatsApp par share kare" },
+                  {
+                    step: "1",
+                    text: "Free account banaye aur personal details bhare",
+                  },
+                  {
+                    step: "2",
+                    text: "Photo upload kare aur premium template choose kare",
+                  },
+                  {
+                    step: "3",
+                    text: "PDF download kare ya WhatsApp par share kare",
+                  },
                 ].map(({ step, text }) => (
-                  <li key={step} className="flex items-start gap-3 text-sm text-[#a89060]">
+                  <li
+                    key={step}
+                    className="flex items-start gap-3 text-sm text-[#a89060]"
+                  >
                     <span
                       className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-[#0f0a00]"
-                      style={{ background: "linear-gradient(135deg, #d4a017, #f0c040)" }}
+                      style={{
+                        background: "linear-gradient(135deg, #d4a017, #f0c040)",
+                      }}
                     >
                       {step}
                     </span>
@@ -1325,11 +1354,20 @@ const HomePage = () => {
           <div className="mt-8 text-center" data-aos="fade-up">
             <p className="text-xs text-[#a89060] leading-relaxed max-w-3xl mx-auto">
               Aguaa is the best matrimonial biodata maker for{" "}
-              <a href="/explore" className="text-[#d4a017] hover:underline">Bihar matrimonial</a>,{" "}
-              <a href="/explore" className="text-[#d4a017] hover:underline">UP matrimonial</a>,{" "}
-              <a href="/explore" className="text-[#d4a017] hover:underline">Jharkhand matrimonial</a>,{" "}
-              shaadi biodata maker, marriage profile creator, rishta karane wala platform,{" "}
-              dulha dulhan biodata, विवाह बायोडाटा, शादी के लिए बायोडाटा।
+              <a href="/explore" className="text-[#d4a017] hover:underline">
+                Bihar matrimonial
+              </a>
+              ,{" "}
+              <a href="/explore" className="text-[#d4a017] hover:underline">
+                UP matrimonial
+              </a>
+              ,{" "}
+              <a href="/explore" className="text-[#d4a017] hover:underline">
+                Jharkhand matrimonial
+              </a>
+              , shaadi biodata maker, marriage profile creator, rishta karane
+              wala platform, dulha dulhan biodata, विवाह बायोडाटा, शादी के लिए
+              बायोडाटा।
             </p>
           </div>
         </div>
@@ -1400,7 +1438,8 @@ const HomePage = () => {
               <span className="text-[#f0c040] italic">Sawal Jawab</span>
             </h3>
             <p className="text-[#a89060] text-sm max-w-xl mx-auto">
-              Marriage biodata ke baare mein aapke saare sawalo ke jawab yahan milenge.
+              Marriage biodata ke baare mein aapke saare sawalo ke jawab yahan
+              milenge.
             </p>
           </div>
 
@@ -1544,7 +1583,7 @@ const HomePage = () => {
               <Button
                 variant="gold"
                 size="xl"
-                className="w-full sm:w-auto text-lg shadow-[0_0_30px_rgba(212,160,23,0.3)] hover:shadow-[0_0_40px_rgba(212,160,23,0.5)] transition-all scale-105 hover:scale-110"
+                className="px-2 py-2 md:px-3 md:py-2 lg:px-3 lg:py-2 sm:w-auto text-lg shadow-[0_0_30px_rgba(212,160,23,0.3)] hover:shadow-[0_0_40px_rgba(212,160,23,0.5)] transition-all scale-105 hover:scale-110"
               >
                 Create Now
               </Button>
@@ -1553,7 +1592,7 @@ const HomePage = () => {
               <Button
                 variant="outline"
                 size="xl"
-                className="w-full sm:w-auto text-lg border-[#d4a017]/50 text-[#f0c040] hover:bg-[#2a1e08]"
+                className="px-2 py-2 md:px-3 md:py-2 lg:px-3 lg:py-2 sm:w-auto text-lg border-[#d4a017]/50 text-[#f0c040] hover:bg-[#2a1e08]"
               >
                 Explore Templates
               </Button>
@@ -1706,7 +1745,8 @@ const HomePage = () => {
 
           <div className="border-t border-[#d4a017]/20 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-[#a89060] text-sm">
-              © {new Date().getFullYear()} Aguaa — Dil Se Rishta, Vishwas Se Shaadi.
+              © {new Date().getFullYear()} Aguaa — Dil Se Rishta, Vishwas Se
+              Shaadi.
             </p>
             <div className="flex gap-2">
               <span className="w-8 h-8 rounded bg-[#1f1500] border border-[#d4a017]/20 flex items-center justify-center hover:bg-[#2a1e08] transition-colors cursor-pointer">

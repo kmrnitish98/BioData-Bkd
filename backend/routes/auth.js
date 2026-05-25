@@ -1,8 +1,29 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const rateLimit = require('express-rate-limit');
+const { z } = require('zod');
 const User = require('../models/User');
 
 const router = express.Router();
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Limit each IP to 5 login requests per windowMs
+  message: { message: 'Too many login attempts, please try again after 15 minutes' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const signupSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters').max(50),
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+});
+
+const loginSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string(),
+});
 
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
@@ -10,14 +31,11 @@ const generateToken = (id) =>
 // POST /api/auth/signup
 router.post('/signup', async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Name, email and password are required' });
+    const parsed = signupSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: parsed.error.errors[0].message });
     }
-    if (password.length < 6) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters' });
-    }
+    const { name, email, password } = parsed.data;
 
     const existing = await User.findOne({ email });
     if (existing) {
@@ -26,8 +44,15 @@ router.post('/signup', async (req, res) => {
 
     const user = await User.create({ name, email, password });
 
+    const token = generateToken(user._id);
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
     res.status(201).json({
-      token: generateToken(user._id),
       user: { id: user._id, name: user.name, email: user.email, avatar: user.avatar },
     });
   } catch (err) {
@@ -37,13 +62,13 @@ router.post('/signup', async (req, res) => {
 });
 
 // POST /api/auth/login
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
   try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required' });
+    const parsed = loginSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: parsed.error.errors[0].message });
     }
+    const { email, password } = parsed.data;
 
     const user = await User.findOne({ email }).select('+password');
     if (!user || !user.password) {
@@ -55,8 +80,15 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
+    const token = generateToken(user._id);
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
     res.json({
-      token: generateToken(user._id),
       user: { id: user._id, name: user.name, email: user.email, avatar: user.avatar },
     });
   } catch (err) {
@@ -88,8 +120,15 @@ router.post('/google', async (req, res) => {
       user = await User.create({ name, email, googleId, avatar });
     }
 
+    const jwtToken = generateToken(user._id);
+    res.cookie('token', jwtToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
     res.json({
-      token: generateToken(user._id),
       user: { id: user._id, name: user.name, email: user.email, avatar: user.avatar },
     });
   } catch (err) {
@@ -98,7 +137,14 @@ router.post('/google', async (req, res) => {
   }
 });
 
-
+// POST /api/auth/logout
+router.post('/logout', (req, res) => {
+  res.cookie('token', '', {
+    httpOnly: true,
+    expires: new Date(0),
+  });
+  res.json({ message: 'Logged out successfully' });
+});
 
 // GET /api/auth/me  — validate token and return current user
 router.get('/me', require('../middleware/auth').protect, (req, res) => {

@@ -74,6 +74,10 @@
       color-adjust: exact !important;
     }
 
+    .print-fixed-bg {
+      position: fixed !important;
+    }
+
     /* Hide the main React app */
     #root {
       display: none !important;

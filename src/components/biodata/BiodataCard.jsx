@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { MapPin, GraduationCap, ExternalLink, Heart, Sparkles } from 'lucide-react';
+import { optimizeImage } from '../../utils/image';
 
 // Calculate age from DOB string
 const calculateAge = (dob) => {

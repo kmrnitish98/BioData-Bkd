@@ -109,14 +109,21 @@ const DashboardPage = () => {
             animate={{ opacity: 1, y: 0 }}
             className="text-center py-32 glass-card rounded-3xl border border-yellow-900/20"
           >
-            <div className="w-20 h-20 rounded-full bg-red-950/60 border border-yellow-900/20 flex items-center justify-center mx-auto mb-5">
-              <PlusCircle className="w-10 h-10 text-yellow-800/60" />
+            <div className="relative w-32 h-32 mx-auto mb-6">
+              <div className="absolute inset-0 bg-yellow-900/10 rounded-full blur-xl animate-pulse" />
+              <div className="absolute inset-0 border border-yellow-700/20 rounded-full flex items-center justify-center bg-gradient-to-b from-red-950/40 to-transparent">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-yellow-600/60">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                  <path d="M12 8v4" />
+                  <path d="M10 10h4" />
+                </svg>
+              </div>
             </div>
-            <h2 className="text-xl text-white font-light mb-2" style={{ fontFamily: 'Playfair Display, serif' }}>
-              No Biodatas Yet
+            <h2 className="text-2xl text-white font-light mb-3" style={{ fontFamily: 'Playfair Display, serif', letterSpacing: '0.05em' }}>
+              Your Journey Begins Here
             </h2>
-            <p className="text-gray-400 text-sm mb-6">
-              Create your first beautiful marriage biodata in minutes.
+            <p className="text-yellow-600/70 text-sm mb-8 max-w-md mx-auto italic" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+              "Create a beautiful, print-ready marriage profile that reflects your true essence and family values."
             </p>
             <Link to="/create">
               <Button variant="gold" size="md">

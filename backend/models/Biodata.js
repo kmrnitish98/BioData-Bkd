@@ -41,6 +41,7 @@ const biodataSchema = new mongoose.Schema(
       zodiac: String,
       complexion: String,
       motherTongue: String,
+      languagesKnown: [String],
     },
     educationInfo: {
       highestQualification: { type: String, required: true },
@@ -50,6 +51,7 @@ const biodataSchema = new mongoose.Schema(
       occupation: String,
       employer: String,
       annualIncome: String,
+      careerDescription: String,
     },
     familyInfo: {
       fatherName: String,
@@ -63,14 +65,24 @@ const biodataSchema = new mongoose.Schema(
         {
           name: String,
           role: String,
+          married: Boolean,
         },
       ],
+      brothersCount: Number,
+      sistersCount: Number,
+      marriedSiblings: Number,
+      familyValues: [String],
+      familyDescription: String,
     },
     preferences: {
       bio: String,
+      aboutMe: String,
       partnerExpectations: String,
       preferredLocation: String,
-      hobbies: String,
+      preferredEducation: [String],
+      preferredProfession: [String],
+      preferredCity: [String],
+      hobbies: [String],
       contactName: { type: String, required: true },
       contactPhone: { type: String, required: true },
       contactEmail: String,
@@ -82,5 +94,15 @@ const biodataSchema = new mongoose.Schema(
 // Compound indexes for the two queries used in the app
 biodataSchema.index({ userId: 1, createdAt: -1 });
 biodataSchema.index({ isPublic: 1, createdAt: -1 });
+
+// Text index for search functionality
+biodataSchema.index({
+  'personalInfo.fullName': 'text',
+  'personalInfo.city': 'text',
+  'personalInfo.religion': 'text',
+  'personalInfo.caste': 'text',
+  'educationInfo.highestQualification': 'text',
+  'educationInfo.occupation': 'text',
+});
 
 module.exports = mongoose.model('Biodata', biodataSchema);

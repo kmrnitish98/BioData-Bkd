@@ -7,6 +7,7 @@ import 'swiper/css';
 import 'swiper/css/effect-fade';
 import 'swiper/css/pagination';
 import Button from '../ui/Button';
+import { optimizeImage } from '../../utils/image';
 
 /* ─── Floating Golden Particles ──────────────────── */
 const GoldenParticles = () => {
@@ -85,7 +86,8 @@ const HeroBanner = ({ name, tagline, photoURL, photos = [], onShare, onPrint, on
     ? name.split(' ').filter(Boolean).map((n) => n[0]).join('').slice(0, 2).toUpperCase()
     : '✦';
 
-  const images = photos.length > 0 ? photos : photoURL ? [photoURL] : [];
+  const rawImages = photos.length > 0 ? photos : photoURL ? [photoURL] : [];
+  const images = rawImages.map(img => optimizeImage(img, 800));
   const [activeIndex, setActiveIndex] = useState(0);
 
   return (

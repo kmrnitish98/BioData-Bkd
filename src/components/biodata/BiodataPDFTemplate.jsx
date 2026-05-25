@@ -36,7 +36,7 @@ const generateBio = ({ fullName, dob, height, occupation, city, religion, caste,
   const occup = occupation || 'professional';
   const place = city || 'India';
   const relig = religion ? `${religion}${caste ? ` (${caste})` : ''}` : null;
-  const hobby = hobbies ? hobbies.split(',')[0].trim().toLowerCase() : null;
+  const hobby = hobbies ? (Array.isArray(hobbies) ? hobbies[0] : hobbies.split(',')[0]).trim().toLowerCase() : null;
 
   const templates = [
     `${name} is a warm-hearted, family-oriented ${occup} based in ${place}, who beautifully balances modern aspirations with deep traditional values. Brought up in a loving${familyType ? ` ${familyType.toLowerCase()}` : ''} family, ${name.split(' ')[0]} carries a gentle character, a compassionate soul, and a strong sense of responsibility${hobby ? `, with a sincere passion for ${hobby}` : ''}. Seeking a life partner who shares the same reverence for family, love, and a purposeful life together.`,
@@ -450,31 +450,33 @@ const PageFooter = ({ current, total }) => (
 );
 
 /* ─── A4 Page Shell ──────────────────────────────────────────── */
-const A4Page = ({ children, pageIdx, totalPages, name, isFirst, bio }) => (
+const A4Page = ({ children, name, bio, pageIdx = 0, totalPages = 2 }) => (
   <div className="pdf-page" style={{
-    width:'794px', minHeight:'1123px', height:'auto', margin:'0 auto',
+    width:'100%', margin:'0 auto',
     background: C.pageBg, backgroundColor: C.pageBgSolid,
     color: C.text, position:'relative', overflow:'visible',
     fontFamily: FONT_INTER, boxSizing:'border-box',
     WebkitPrintColorAdjust:'exact', printColorAdjust:'exact',
   }}>
-    <PageFrame />
-    <MandalaWatermark />
+    <div className="print-fixed-bg">
+      <PageFrame />
+      <MandalaWatermark />
 
-    <FloralCorner position="TL" uid={`p${pageIdx}TL`} />
-    <FloralCorner position="TR" uid={`p${pageIdx}TR`} />
-    <FloralCorner position="BL" uid={`p${pageIdx}BL`} />
-    <FloralCorner position="BR" uid={`p${pageIdx}BR`} />
+      <FloralCorner position="TL" uid={`pTL`} />
+      <FloralCorner position="TR" uid={`pTR`} />
+      <FloralCorner position="BL" uid={`pBL`} />
+      <FloralCorner position="BR" uid={`pBR`} />
+    </div>
 
     {/* Ambient glow blobs */}
-    <div style={{ position:'absolute',top:'20%',left:'30%',width:200,height:200,
+    <div className="print-fixed-bg" style={{ position:'absolute',top:'20%',left:'30%',width:200,height:200,
       borderRadius:'50%',background:'radial-gradient(circle,rgba(212,160,23,0.05) 0%,transparent 70%)',
       pointerEvents:'none',zIndex:0 }}/>
-    <div style={{ position:'absolute',bottom:'20%',right:'20%',width:170,height:170,
+    <div className="print-fixed-bg" style={{ position:'absolute',bottom:'20%',right:'20%',width:170,height:170,
       borderRadius:'50%',background:'radial-gradient(circle,rgba(150,18,18,0.055) 0%,transparent 70%)',
       pointerEvents:'none',zIndex:0 }}/>
 
-    <PageHeader name={name} isFirst={isFirst} bio={bio} />
+    <PageHeader name={name} isFirst={true} bio={bio} />
 
     <div style={{ position:'relative', zIndex:5, padding:'20px 26px', paddingBottom:'42px' }}>
       {children}
@@ -849,7 +851,7 @@ const BiodataPDFTemplate = React.forwardRef(({ biodata }, ref) => {
                 <>
                   <SubLabel text="Hobbies & Interests" />
                   <p style={{ margin:0, fontSize:'12.5px', color: C.text, lineHeight:'1.82', letterSpacing:'0.01em' }}>
-                    {hobbies}
+                    {Array.isArray(hobbies) ? hobbies.join(', ') : hobbies}
                   </p>
                 </>
               )}
@@ -905,14 +907,9 @@ const BiodataPDFTemplate = React.forwardRef(({ biodata }, ref) => {
   return (
     <div ref={ref} id="biodata-pdf-root" className="print-container pdf-render-container"
       style={{ background:'#0a0000', WebkitPrintColorAdjust:'exact', printColorAdjust:'exact' }}>
-
-      {/* ═══ PAGE 1 ═══ */}
-      <A4Page pageIdx={0} totalPages={totalPages} name={fullName} isFirst bio={bio}>
+      
+      <A4Page name={fullName} bio={bio}>
         <Page1Content />
-      </A4Page>
-
-      {/* ═══ PAGE 2 ═══ */}
-      <A4Page pageIdx={1} totalPages={totalPages} name={fullName} isFirst={false}>
         <Page2Content />
       </A4Page>
 

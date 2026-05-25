@@ -22,11 +22,11 @@ const LoginPage = () => {
     formState: { errors, isSubmitting },
   } = useForm();
 
-  const onSubmit = async ({ email, password }) => {
+  const onSubmit = async (data) => {
     setAuthError("");
     try {
-      const { token, user } = await apiLogin(email, password);
-      login(token, user);
+      const { user } = await apiLogin(data.email, data.password);
+      login(user);
       navigate("/dashboard");
     } catch (err) {
       setAuthError(err.message || "Sign in failed. Please try again.");
@@ -38,8 +38,8 @@ const LoginPage = () => {
       setAuthError("");
       setSocialLoading(true);
       try {
-        const { token, user } = await apiGoogleLogin(tokenResponse.credential || tokenResponse.access_token);
-        login(token, user);
+        const { user } = await apiGoogleLogin(tokenResponse.credential || tokenResponse.access_token);
+        login(user);
         navigate("/dashboard");
       } catch (err) {
         setAuthError(err.message || "Google login failed.");

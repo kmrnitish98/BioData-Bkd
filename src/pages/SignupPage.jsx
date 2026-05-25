@@ -30,11 +30,11 @@ const SignupPage = () => {
     formState: { errors, isSubmitting },
   } = useForm();
 
-  const onSubmit = async ({ name, email, password }) => {
+  const onSubmit = async (data) => {
     setAuthError("");
     try {
-      const { token, user } = await apiSignUp(name, email, password);
-      login(token, user);
+      const { user } = await apiSignUp(data.name, data.email, data.password);
+      login(user);
       navigate("/create");
     } catch (err) {
       setAuthError(err.message || "Registration failed. Please try again.");
@@ -46,8 +46,8 @@ const SignupPage = () => {
       setAuthError("");
       setSocialLoading(true);
       try {
-        const { token, user } = await apiGoogleLogin(tokenResponse.credential || tokenResponse.access_token);
-        login(token, user);
+        const { user } = await apiGoogleLogin(tokenResponse.credential || tokenResponse.access_token);
+        login(user);
         navigate("/create");
       } catch (err) {
         setAuthError(err.message || "Google registration failed.");

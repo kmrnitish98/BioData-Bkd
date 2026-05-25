@@ -118,8 +118,15 @@ const ExplorePage = () => {
             </div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-24 bg-[#1f1500] border border-[#d4a017]/20 rounded-3xl">
-              <Heart className="w-16 h-16 text-[#d4a017]/50 mx-auto mb-4" />
-              <p className="text-[#a89060] mb-6 text-lg">No profiles found matching your search.</p>
+              <div className="relative w-32 h-32 mx-auto mb-6">
+                <div className="absolute inset-0 bg-[#d4a017]/10 rounded-full blur-xl animate-pulse" />
+                <div className="absolute inset-0 border border-[#d4a017]/20 rounded-full flex items-center justify-center bg-gradient-to-b from-[#1a0900]/40 to-transparent">
+                  <Heart className="w-10 h-10 text-[#d4a017]/60" />
+                </div>
+              </div>
+              <p className="text-[#a89060] mb-6 text-lg" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+                No profiles found matching your search.
+              </p>
               {!search && (
                 <Link to="/create">
                   <Button variant="gold" size="lg">Create the First Profile</Button>

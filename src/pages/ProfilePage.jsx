@@ -5,7 +5,6 @@ import {
   Share2, Printer, Download, Check, ArrowLeft, Heart,
   MessageCircle, ShieldCheck, Sparkles, Quote, ChevronUp, AlertCircle,
 } from 'lucide-react';
-import html2canvas from 'html2canvas';
 import { createPortal } from 'react-dom';
 import { apiGetBiodataById } from '../api/client';
 import HeroBanner from '../components/biodata/HeroBanner';
@@ -160,11 +159,17 @@ const PremiumFooter = () => (
         className="text-yellow-700/40 text-base sm:text-lg tracking-[0.15em] sm:tracking-[0.2em] mb-1 sm:mb-2"
         style={{ fontFamily: 'Cinzel, Playfair Display, serif' }}
       >
-        ✦ BioData ✦
+        ✦ BioData with Aguaa ✦
       </p>
-      <p className="text-gray-600 text-[10px] sm:text-xs tracking-wider">
-        © {new Date().getFullYear()} BioData. Crafted with elegance & love.
-      </p>
+      <div className="mt-3 flex flex-col items-center justify-center gap-1.5">
+        <p className="text-gray-500/80 text-[10px] sm:text-xs tracking-widest uppercase font-medium">
+          © {new Date().getFullYear()} Aguaa. Crafted with elegance & love.
+        </p>
+        <div className="flex items-center gap-2 text-[9px] sm:text-[10px] tracking-[0.2em] uppercase font-semibold">
+          <span className="text-gray-600/60">Designed By</span>
+          <span className="text-yellow-700/70">Nitish Kumar</span>
+        </div>
+      </div>
     </div>
   </footer>
 );
@@ -277,145 +282,11 @@ const ProfilePage = () => {
   }, []);
 
   /* ─── Premium HD Multi-Page PDF Generation ──────── */
-  const handleDownloadPDF = useCallback(async () => {
-    if (!pdfTemplateRef.current) return;
-    setPdfLoading(true);
-    setPdfError('');
-    setPdfStage('Preparing layout…');
-
-    const templateEl = pdfTemplateRef.current;
-
-    // Snapshot original styles
-    const origStyles = {
-      display:    templateEl.style.display,
-      visibility: templateEl.style.visibility,
-      position:   templateEl.style.position,
-      top:        templateEl.style.top,
-      left:       templateEl.style.left,
-      zIndex:     templateEl.style.zIndex,
-      width:      templateEl.style.width,
-      height:     templateEl.style.height,
-      overflow:   templateEl.style.overflow,
-    };
-
-    const restoreStyles = () => Object.assign(templateEl.style, origStyles);
-
-    try {
-      // 1. Mount at A4 render width (794px = 96dpi equivalent)
-      Object.assign(templateEl.style, {
-        display:    'block',
-        visibility: 'visible',
-        position:   'fixed',
-        top:        '0',
-        left:       '0',
-        zIndex:     '-9999',
-        width:      '794px',
-        height:     'auto',
-        overflow:   'visible',
-      });
-
-      // 2. Wait for fonts + images + layout reflow
-      setPdfStage('Loading fonts & images…');
-      if (document.fonts?.ready) await document.fonts.ready;
-      await new Promise(r => setTimeout(r, 1200));
-
-      // 3. Detect if images are all loaded
-      const imgEls = templateEl.querySelectorAll('img');
-      await Promise.all(Array.from(imgEls).map(img =>
-        img.complete ? Promise.resolve() : new Promise(r => { img.onload = r; img.onerror = r; })
-      ));
-
-      setPdfStage('Rendering pages…');
-
-      // 4. Capture full content
-      const canvas = await html2canvas(templateEl, {
-        scale: 3,                       // 3x = crisp but not bloated
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#120000',
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: 794,
-        windowHeight: templateEl.scrollHeight,
-        logging: false,
-        imageTimeout: 15000,
-        onclone: (clonedDoc) => {
-          // Force background rendering in cloned document
-          clonedDoc.querySelectorAll('*').forEach(el => {
-            if (el.style) {
-              el.style.webkitPrintColorAdjust = 'exact';
-              el.style.printColorAdjust = 'exact';
-            }
-          });
-        },
-      });
-
-      setPdfStage('Building PDF…');
-
-      // 5. Dynamic import jsPDF to reduce initial bundle size
-      const { default: jsPDF } = await import('jspdf');
-
-      const A4_W_MM = 210;
-      const A4_H_MM = 297;
-
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-        compress: true,
-      });
-
-      // 6. Multi-page slicing
-      const imgWidthPx   = canvas.width;
-      const imgHeightPx  = canvas.height;
-      const pageHeightPx = Math.floor(imgWidthPx * (A4_H_MM / A4_W_MM));
-
-      let heightLeftPx = imgHeightPx;
-      let positionPx   = 0;
-      let pageNum      = 0;
-
-      while (heightLeftPx > 0) {
-        if (pageNum > 0) pdf.addPage();
-
-        const sliceH = Math.min(pageHeightPx, heightLeftPx);
-
-        // Slice canvas
-        const pageCanvas = document.createElement('canvas');
-        pageCanvas.width  = imgWidthPx;
-        pageCanvas.height = sliceH;
-
-        const ctx = pageCanvas.getContext('2d');
-        ctx.fillStyle = '#120000';
-        ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-        ctx.drawImage(canvas, 0, positionPx, imgWidthPx, sliceH, 0, 0, imgWidthPx, sliceH);
-
-        const imgData     = pageCanvas.toDataURL('image/jpeg', 0.88);
-        const sliceHMm    = (sliceH / imgWidthPx) * A4_W_MM;
-
-        pdf.addImage(imgData, 'JPEG', 0, 0, A4_W_MM, sliceHMm, undefined, 'FAST');
-
-        heightLeftPx -= pageHeightPx;
-        positionPx   += pageHeightPx;
-        pageNum++;
-      }
-
-      restoreStyles();
-
-      setPdfStage('Saving…');
-      const safeName = (biodata?.personalInfo?.fullName || 'Biodata')
-        .replace(/[^a-zA-Z0-9\s]/g, '')
-        .replace(/\s+/g, '_');
-      pdf.save(`${safeName}_BioData.pdf`);
-
-    } catch (err) {
-      console.error('PDF generation error:', err);
-      restoreStyles();
-      setPdfError('PDF generation failed. Please try again or use the Print option.');
-    } finally {
-      setPdfLoading(false);
-      setPdfStage('');
-    }
-  }, [biodata]);
+  const handleDownloadPDF = useCallback(() => {
+    // Native print dialog handles saving as PDF much better, 
+    // producing selectable text and perfect vector rendering.
+    window.print();
+  }, []);
 
   /* ─── Loading & Not Found States ────────────────── */
   if (loading) return <Loader message="Loading Biodata…" />;
@@ -496,10 +367,37 @@ const ProfilePage = () => {
       <ScrollProgress />
       <BackToTop />
 
-      {/* ─── Ambient Background ──────────────────────── */}
-      <div className="fixed inset-0 pointer-events-none z-0 print:hidden">
-        <div className="absolute top-0 right-0 w-[60vw] h-[60vh] bg-red-900/5 blur-[150px] rounded-full" />
-        <div className="absolute bottom-0 left-0 w-[50vw] h-[50vh] bg-yellow-900/3 blur-[120px] rounded-full" />
+      {/* ─── Premium Silk Weave Background ──────────────────────── */}
+      <div className="fixed inset-0 pointer-events-none z-0 print:hidden overflow-hidden">
+        {/* Base Gradient */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: "linear-gradient(135deg, #120500 0%, #1e0b00 50%, #120500 100%)",
+          }}
+        />
+        {/* Diagonal Gold Stripes */}
+        <div
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage: "repeating-linear-gradient(45deg, #d4a017 0px, #d4a017 1px, transparent 1px, transparent 40px)",
+          }}
+        />
+        {/* Diagonal Maroon Stripes (cross-weave) */}
+        <div
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage: "repeating-linear-gradient(-45deg, #8b0000 0px, #8b0000 1px, transparent 1px, transparent 60px)",
+          }}
+        />
+        
+        {/* Ambient Glows */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[radial-gradient(circle,#d4a017_0%,transparent_70%)] opacity-[0.08] translate-x-1/3 -translate-y-1/3 rounded-full" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[radial-gradient(circle,#8b0000_0%,transparent_70%)] opacity-[0.06] -translate-x-1/3 translate-y-1/3 rounded-full" />
+        
+        {/* Soft edge fading lines */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-yellow-600/30 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-yellow-600/30 to-transparent" />
       </div>
 
       {/* ─── Fixed Back Button ───────────────────────── */}
@@ -608,7 +506,7 @@ const ProfilePage = () => {
                         <p className="text-[10px] sm:text-xs text-yellow-600/70 uppercase tracking-[0.15em] sm:tracking-widest font-medium mb-1">
                           Hobbies & Interests
                         </p>
-                        <p className="text-sm sm:text-base text-gray-300">{preferences.hobbies}</p>
+                        <p className="text-sm sm:text-base text-gray-300">{Array.isArray(preferences.hobbies) ? preferences.hobbies.join(', ') : preferences.hobbies}</p>
                       </motion.div>
                     )}
                     {preferences.preferredLocation && (

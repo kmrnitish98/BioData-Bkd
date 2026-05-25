@@ -1066,8 +1066,42 @@ const CreateBiodataPage = () => {
 
   return (
     <div className="min-h-screen pt-20 sm:pt-24 pb-28 sm:pb-16 px-4">
-      {/* Background */}
-      <div className="fixed inset-0 bg-gradient-to-br from-[#0d0000] via-[#150000] to-[#0d0000] -z-10" />
+      {/* Premium Honeycomb Background (Matching Explore Profiles) */}
+      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div
+          className="absolute inset-0"
+          style={{
+            background: "linear-gradient(180deg, #0e0500 0%, #1a0900 40%, #120600 100%)",
+          }}
+        />
+        <div
+          className="absolute inset-0 opacity-[0.055]"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100'%3E%3Cpath d='M28 66L0 50V16L28 0l28 16v34zm0-18L8 36V20L28 8l20 12v16z' fill='none' stroke='%23d4a017' stroke-width='1'/%3E%3C/svg%3E")`,
+            backgroundSize: "56px 100px",
+          }}
+        />
+        <div
+          className="absolute top-0 left-1/2 w-[700px] h-[400px] -translate-x-1/2 -translate-y-1/2 opacity-10"
+          style={{
+            background: "radial-gradient(ellipse, #d4a017 0%, transparent 70%)",
+          }}
+        />
+        <div
+          className="absolute bottom-0 left-0 w-[300px] h-[300px] opacity-8"
+          style={{
+            background: "radial-gradient(circle, #8b0000 0%, transparent 70%)",
+            transform: "translate(-30%,30%)",
+          }}
+        />
+        <div
+          className="absolute bottom-0 right-0 w-[300px] h-[300px] opacity-8"
+          style={{
+            background: "radial-gradient(circle, #8b0000 0%, transparent 70%)",
+            transform: "translate(30%,30%)",
+          }}
+        />
+      </div>
 
       <div className="max-w-2xl mx-auto">
         {/* Header */}

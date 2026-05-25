@@ -12,6 +12,14 @@
   ],
   "rewrites": [
     {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap.xml.js"
+    },
+    {
+      "source": "/profile/(.*)",
+      "destination": "/api/og.js?id=$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

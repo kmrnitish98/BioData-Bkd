@@ -1,4 +1,5 @@
 const express = require('express');
+const fs = require('fs');
 const Biodata = require('../models/Biodata');
 const { protect } = require('../middleware/auth');
 const { upload, cloudinary } = require('../config/cloudinary');
@@ -107,7 +108,7 @@ router.post('/', protect, async (req, res) => {
     res.status(201).json(biodata);
   } catch (err) {
     console.error('[Biodata] create error:', err.message);
-    res.status(500).json({ message: 'Failed to create biodata' });
+    res.status(500).json({ message: 'Failed to create biodata: ' + err.message, error: err.stack });
   }
 });
 
@@ -129,8 +130,9 @@ router.patch('/:id', protect, async (req, res) => {
     );
     res.json(updated);
   } catch (err) {
+    console.error('[Biodata] update error:', err.message);
     if (err.name === 'CastError') return res.status(404).json({ message: 'Not found' });
-    res.status(500).json({ message: 'Failed to update biodata' });
+    res.status(500).json({ message: 'Failed to update biodata: ' + err.message, error: err.stack });
   }
 });
 
