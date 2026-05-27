@@ -99,15 +99,36 @@ router.post('/login', loginLimiter, async (req, res) => {
 });
 
 // POST /api/auth/google
+// Receives an OAuth2 access_token from frontend (useGoogleLogin implicit flow).
+// Verifies it against Google userinfo, then creates/updates user and sets JWT cookie.
 router.post('/google', async (req, res) => {
   try {
     const { token } = req.body;
-    if (!token) return res.status(400).json({ message: 'No Google token provided' });
+    if (!token) {
+      console.warn('[Auth] /google called with no token');
+      return res.status(400).json({ message: 'No Google token provided' });
+    }
 
-    const { data } = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const { sub: googleId, email, name, picture: avatar } = data;
+    // Verify the access_token with Google
+    let googleData;
+    try {
+      const { data } = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${token}` },
+        timeout: 8000,
+      });
+      googleData = data;
+    } catch (googleErr) {
+      const status = googleErr.response?.status;
+      const msg = googleErr.response?.data?.error_description || googleErr.message;
+      console.error(`[Auth] Google userinfo failed: ${status} — ${msg}`);
+      return res.status(401).json({ message: 'Invalid Google token. Please sign in again.' });
+    }
+
+    const { sub: googleId, email, name, picture: avatar } = googleData;
+    if (!email) {
+      console.error('[Auth] Google profile has no email:', JSON.stringify(googleData));
+      return res.status(400).json({ message: 'Google account has no email address.' });
+    }
 
     let user = await User.findOne({ email });
     if (user) {
@@ -121,19 +142,23 @@ router.post('/google', async (req, res) => {
     }
 
     const jwtToken = generateToken(user._id);
+    const isProd = process.env.NODE_ENV === 'production';
+    console.log(`[Auth] Google login OK — user:${user._id} NODE_ENV:${process.env.NODE_ENV} secure:${isProd} sameSite:${isProd ? 'none' : 'lax'}`);
+
     res.cookie('token', jwtToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/',
     });
 
     res.json({
       user: { id: user._id, name: user.name, email: user.email, avatar: user.avatar },
     });
   } catch (err) {
-    console.error('[Auth] google login error:', err.message);
-    res.status(500).json({ message: 'Google login failed' });
+    console.error('[Auth] Google login unexpected error:', err.message);
+    res.status(500).json({ message: 'Google login failed. Please try again.' });
   }
 });
 
@@ -149,9 +174,11 @@ router.post('/logout', (req, res) => {
 });
 
 // GET /api/auth/me  — validate token and return current user
+// Returns { user: { ... } } — same shape as login/signup/google for consistency.
+// IMPORTANT: Must wrap in { user: } — frontend getMe() does .then(data => data.user)
 router.get('/me', require('../middleware/auth').protect, (req, res) => {
   const u = req.user;
-  res.json({ id: u._id, name: u.name, email: u.email, avatar: u.avatar });
+  res.json({ user: { id: u._id, name: u.name, email: u.email, avatar: u.avatar } });
 });
 
 module.exports = router;

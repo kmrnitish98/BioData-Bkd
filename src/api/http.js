@@ -119,8 +119,16 @@ export const http = async (endpoint, options = {}) => {
 
   // ── 401 — session expired ────────────────────────────────────
   if (res.status === 401) {
-    logger.warn('Session expired — dispatching auth:expired', { context: 'http', data: endpoint });
-    dispatchAuthExpired();
+    // IMPORTANT: Only dispatch auth:expired for NON-auth routes.
+    // Auth routes (/auth/google, /auth/login, /auth/me) handle their own
+    // 401s at the call site. Dispatching here would cause AuthContext to
+    // clear localStorage and redirect to /login WHILE the user is actively
+    // trying to log in (e.g. bad Google token → 401 → global logout race).
+    const isAuthRoute = endpoint.startsWith('/auth/');
+    if (!isAuthRoute) {
+      logger.warn('Session expired — dispatching auth:expired', { context: 'http', data: endpoint });
+      dispatchAuthExpired();
+    }
     const err = new Error(data.message || 'Your session has expired. Please sign in again.');
     err.status = 401;
     throw err;

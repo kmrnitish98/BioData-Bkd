@@ -39,21 +39,32 @@ const LoginPage = () => {
   };
 
   const handleGoogleLogin = useGoogleLogin({
+    // useGoogleLogin = OAuth2 implicit/auth-code flow.
+    // Returns access_token — NOT credential (that's only for <GoogleLogin> one-tap).
+    flow: 'implicit',
     onSuccess: async (tokenResponse) => {
       setAuthError("");
       setSocialLoading(true);
       try {
-        const { user } = await apiGoogleLogin(tokenResponse.credential || tokenResponse.access_token);
+        const accessToken = tokenResponse.access_token;
+        if (!accessToken) {
+          setAuthError('Google login failed: no access token received.');
+          return;
+        }
+        const { user } = await apiGoogleLogin(accessToken);
         login(user);
         toast.success(`Welcome, ${user.name || 'back'}!`);
         navigate("/dashboard");
       } catch (err) {
-        setAuthError(getErrorMessage(err, 'Google login failed.'));
+        setAuthError(getErrorMessage(err, 'Google login failed. Please try again.'));
       } finally {
         setSocialLoading(false);
       }
     },
-    onError: () => setAuthError("Google login failed. Please try again.")
+    onError: (err) => {
+      console.error('[Google OAuth Error]', err);
+      setAuthError('Google login failed. Please try again.');
+    },
   });
 
 

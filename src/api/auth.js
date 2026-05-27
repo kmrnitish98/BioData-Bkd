@@ -53,7 +53,7 @@ export const logout = () =>
  * @returns {Promise<object>} user object
  */
 export const getMe = (signal) =>
-  http('/auth/me', { signal });
+  http('/auth/me', { signal }).then((data) => data.user);
 
 /**
  * Request a password reset email.

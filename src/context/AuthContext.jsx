@@ -46,10 +46,10 @@ export const AuthProvider = ({ children }) => {
     }
   });
 
-  // loading=true only when we have a cached user to verify with the server
-  const [loading, setLoading] = useState(
-    () => Boolean(localStorage.getItem(AUTH.USER_STORAGE_KEY))
-  );
+  // Always start loading=true — prevents ProtectedRoute from seeing
+  // a null user before the server session-verify completes.
+  // Set to false only after getMe() resolves or rejects.
+  const [loading, setLoading] = useState(true);
 
   // Ref to track if component is still mounted (prevents setState on unmounted)
   const mounted = useRef(true);
@@ -60,32 +60,33 @@ export const AuthProvider = ({ children }) => {
 
   // ── Verify session on mount ─────────────────────────────────────────────
   useEffect(() => {
-    const hasCachedUser = localStorage.getItem(AUTH.USER_STORAGE_KEY);
-    if (!hasCachedUser) {
-      setLoading(false);
-      return;
-    }
-
-    const { signal, abort } = { signal: null, abort: () => {} };
-    // Use a simple AbortController for cleanup
     const controller = new AbortController();
 
     getMe(controller.signal)
       .then((user) => {
         if (!mounted.current) return;
+        // getMe returns data.user — if backend /auth/me wraps in { user: } correctly
+        // this will be the user object. If undefined, cookie is missing/invalid.
+        if (!user) {
+          localStorage.removeItem(AUTH.USER_STORAGE_KEY);
+          setCurrentUser(null);
+          return;
+        }
         setCurrentUser(user);
         localStorage.setItem(AUTH.USER_STORAGE_KEY, JSON.stringify(user));
         logger.info('Session verified', { context: 'AuthContext', data: { id: user._id } });
       })
       .catch((err) => {
         if (!mounted.current) return;
+        // Ignore aborted/timed-out requests (StrictMode double-mount cleanup)
+        if (err.code === 'ABORTED' || err.code === 'TIMEOUT') return;
         if (err.status === 401) {
           // Genuine session expiry — clear auth
           localStorage.removeItem(AUTH.USER_STORAGE_KEY);
           setCurrentUser(null);
           logger.info('Session expired — logged out', { context: 'AuthContext' });
         }
-        // For network errors / 5xx: keep cached user (still has valid cookie)
+        // Network errors / 5xx: keep cached user (cookie may still be valid)
       })
       .finally(() => {
         if (mounted.current) setLoading(false);

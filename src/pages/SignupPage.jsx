@@ -39,21 +39,30 @@ const SignupPage = () => {
   };
 
   const handleGoogleLogin = useGoogleLogin({
+    flow: 'implicit',
     onSuccess: async (tokenResponse) => {
       setAuthError("");
       setSocialLoading(true);
       try {
-        const { user } = await apiGoogleLogin(tokenResponse.credential || tokenResponse.access_token);
+        const accessToken = tokenResponse.access_token;
+        if (!accessToken) {
+          setAuthError('Google login failed: no access token received.');
+          return;
+        }
+        const { user } = await apiGoogleLogin(accessToken);
         login(user);
         toast.success('Welcome to Aguaa!');
         navigate("/create");
       } catch (err) {
-        setAuthError(getErrorMessage(err, 'Google registration failed.'));
+        setAuthError(getErrorMessage(err, 'Google registration failed. Please try again.'));
       } finally {
         setSocialLoading(false);
       }
     },
-    onError: () => setAuthError("Google registration failed. Please try again.")
+    onError: (err) => {
+      console.error('[Google OAuth Error]', err);
+      setAuthError('Google registration failed. Please try again.');
+    },
   });
 
 
