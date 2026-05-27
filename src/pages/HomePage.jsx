@@ -1,9 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import AOS from "aos";
-import "aos/dist/aos.css";
-import CountUp from "react-countup";
 import {
   PlusCircle,
   Search,
@@ -36,12 +33,53 @@ import "swiper/css";
 import "swiper/css/effect-cards";
 import "swiper/css/pagination";
 
-import { apiGetPublicBiodatas } from "../api/client";
+import { useQuery } from "@tanstack/react-query";
+import { getPublicBiodatas } from "../api/biodata";
+import { QUERY_KEYS } from "../constants/queryKeys";
+import { CACHE } from "../constants/limits";
 import BiodataCard from "../components/biodata/BiodataCard";
 import Button from "../components/ui/Button";
 import { useAuth } from "../hooks/useAuth";
 import { useSEO } from "../hooks/useSEO";
-import { FAQSchema, ReviewSchema } from "../components/seo/SchemaMarkup";
+import { FAQSchema } from "../components/seo/SchemaMarkup";
+
+// —— Tiny CountUp hook: replaces react-countup (~15KB) ——
+const useCountUp = (end, duration = 2000) => {
+  const [count, setCount] = useState(0);
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        observer.disconnect();
+        let start = null;
+        const step = (ts) => {
+          if (!start) start = ts;
+          const progress = Math.min((ts - start) / duration, 1);
+          setCount(Math.floor(progress * end));
+          if (progress < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      },
+      { threshold: 0.5 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [end, duration]);
+  return { count, ref };
+};
+
+// —— Shared animation variant (replaces data-aos="fade-up") ——
+const fadeUpVariant = {
+  hidden: { opacity: 0, y: 30 },
+  visible: (delay = 0) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, ease: "easeOut", delay },
+  }),
+};
 
 // Constants
 const BACKGROUND_VIDEOS = [
@@ -97,8 +135,6 @@ const HERO_MEDIA = [
 const HomePage = () => {
   const { currentUser } = useAuth();
   useSEO("/");
-  const [biodatas, setBiodatas] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [error, setError] = useState(null);
   const [activeBg, setActiveBg] = useState(0);
@@ -107,32 +143,49 @@ const HomePage = () => {
   const [activeFilter, setActiveFilter] = useState("All");
   const [showGalleryUpload, setShowGalleryUpload] = useState(false);
 
-  useEffect(() => {
-    AOS.init({ duration: 800, once: true, offset: 50 });
+  // ── Public biodatas — React Query (shared cache with ExplorePage) ──
+  const {
+    data: biodataResult,
+    isLoading: loading,
+    isError: isQueryError,
+  } = useQuery({
+    queryKey: QUERY_KEYS.biodata.public({ page: 1, search: '', filter: 'All' }),
+    queryFn:  ({ signal }) => getPublicBiodatas({ signal }),
+    staleTime: CACHE.PUBLIC_BIODATAS_STALE_MS,
+    gcTime:    CACHE.GC_TIME_MS,
+  });
 
+  // Normalise: getPublicBiodatas returns { data, total, ... } or plain array
+  const biodatas = Array.isArray(biodataResult)
+    ? biodataResult
+    : (biodataResult?.data ?? []);
+
+  // CountUp refs
+  const { count: countFamilies, ref: refFamilies } = useCountUp(10, 2500);
+  const { count: countRating,   ref: refRating }   = useCountUp(49, 2500);
+  const { count: countVerified, ref: refVerified }  = useCountUp(100, 2500);
+
+  // Memoised particle positions — stable across re-renders
+  const particles = useMemo(
+    () =>
+      Array.from({ length: 15 }, (_, i) => ({
+        id: i,
+        x: (i * 137.5) % 100, // deterministic spread via golden-angle
+        y: (i * 97.3)  % 100,
+        opacity: 0.3 + (i % 4) * 0.12,
+        duration: 6 + (i % 5),
+        yMove: -80 - (i % 5) * 30,
+      })),
+    []
+  );
+
+  useEffect(() => {
     const interval = setInterval(() => {
       setActiveBg((prev) => (prev + 1) % BACKGROUND_VIDEOS.length);
     }, 5000);
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const data = await apiGetPublicBiodatas();
-        setBiodatas(data);
-      } catch (err) {
-        console.error("Error fetching biodatas:", err);
-        setError(
-          "Could not connect to the server. Please check your connection.",
-        );
-        setBiodatas([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, []);
 
   const filtered = biodatas.filter((b) => {
     const name = b.personalInfo?.fullName?.toLowerCase() || "";
@@ -151,7 +204,7 @@ const HomePage = () => {
   return (
     <div className="min-h-screen bg-[#0f0a00] text-[#f5ead0] overflow-hidden font-['DM_Sans',sans-serif] selection:bg-[#d4a017]/30 selection:text-[#f0c040]">
       {/* Schema Markup for Rich Results */}
-      <ReviewSchema ratingValue="4.9" reviewCount="10000" />
+
       {/* WhatsApp Floating Button */}
       <a
         href="https://wa.me/1234567890"
@@ -178,6 +231,7 @@ const HomePage = () => {
                 loop
                 muted
                 playsInline
+                preload={activeBg === i ? "auto" : "none"}
                 className="absolute inset-0 w-full h-full object-cover scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#0f0a00]/90 via-[#0f0a00]/40 to-[#0f0a00]/80" />
@@ -185,27 +239,23 @@ const HomePage = () => {
           ))}
         </div>
 
-        {/* Particles */}
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-          {[...Array(20)].map((_, i) => (
+          {particles.map((p) => (
             <motion.div
-              key={i}
+              key={p.id}
               className="absolute w-1 h-1 bg-[#d4a017] rounded-full"
-              initial={{
-                x:
-                  Math.random() *
-                  (typeof window !== "undefined" ? window.innerWidth : 1000),
-                y:
-                  Math.random() *
-                  (typeof window !== "undefined" ? window.innerHeight : 1000),
-                opacity: Math.random() * 0.5 + 0.3,
+              style={{
+                left: `${p.x}%`,
+                top: `${p.y}%`,
+                opacity: p.opacity,
+                willChange: "transform, opacity",
               }}
               animate={{
-                y: [null, Math.random() * -200],
-                opacity: [null, 0],
+                y: [0, p.yMove],
+                opacity: [p.opacity, 0],
               }}
               transition={{
-                duration: Math.random() * 5 + 5,
+                duration: p.duration,
                 repeat: Infinity,
                 ease: "linear",
               }}
@@ -297,20 +347,18 @@ const HomePage = () => {
                 transition={{ duration: 1, delay: 0.8 }}
                 className="flex items-center justify-center lg:justify-start gap-8 border-t border-[#d4a017]/20 pt-6"
               >
-                <div className="flex flex-col">
+                <div className="flex flex-col" ref={refFamilies}>
                   <span className="text-2xl font-bold text-white">
-                    <CountUp end={10} duration={3} />
-                    K+
+                    {countFamilies}K+
                   </span>
                   <span className="text-xs text-[#a89060] uppercase tracking-wider">
                     Families Trusted
                   </span>
                 </div>
                 <div className="w-px h-10 bg-[#d4a017]/20" />
-                <div className="flex flex-col">
+                <div className="flex flex-col" ref={refRating}>
                   <div className="flex items-center gap-1 text-[#f0c040] text-2xl font-bold">
-                    <CountUp end={4} duration={3} />.
-                    <CountUp end={9} duration={3} />{" "}
+                    {(countRating / 10).toFixed(1)}{" "}
                     <Star className="w-5 h-5 fill-current" />
                   </div>
                   <span className="text-xs text-[#a89060] uppercase tracking-wider">
@@ -318,10 +366,10 @@ const HomePage = () => {
                   </span>
                 </div>
                 <div className="w-px h-10 bg-[#d4a017]/20" />
-                <div className="flex flex-col">
+                <div className="flex flex-col" ref={refVerified}>
                   <span className="text-2xl font-bold text-white flex items-center gap-1">
                     <Shield className="w-5 h-5 text-amber-500" />{" "}
-                    <CountUp end={100} duration={3} />%
+                    {countVerified}%
                   </span>
                   <span className="text-xs text-[#a89060] uppercase tracking-wider">
                     Verified
@@ -331,10 +379,13 @@ const HomePage = () => {
             </div>
 
             {/* Right Content - Cinematic Cards */}
-            <div
+            <motion.div
               className="relative hidden lg:block h-[550px] w-full"
-              data-aos="fade-left"
-              data-aos-delay="400"
+              variants={fadeUpVariant}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+              custom={0.4}
             >
               <div className="absolute inset-0 flex items-center justify-center">
                 <Swiper
@@ -356,9 +407,11 @@ const HomePage = () => {
                         <img
                           src={media.src}
                           alt={`Indian wedding marriage biodata couple - beautiful matrimonial profile ${idx + 1}`}
-                          loading="lazy"
+                          loading={idx === 0 ? "eager" : "lazy"}
+                          fetchPriority={idx === 0 ? "high" : "auto"}
                           width="320"
                           height="480"
+                          decoding="async"
                           className="w-full h-full object-cover transition-transform duration-[10000ms] group-hover:scale-110"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-[#0f0a00]/90 via-[#0f0a00]/20 to-transparent" />
@@ -428,7 +481,7 @@ const HomePage = () => {
                   <p className="text-xs text-[#a89060]">99% Compatibility</p>
                 </div>
               </motion.div>
-            </div>
+            </motion.div>
           </div>
         </div>
 
@@ -504,7 +557,13 @@ const HomePage = () => {
           }}
         />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center mb-16" data-aos="fade-up">
+          <motion.div
+            className="text-center mb-16"
+            variants={fadeUpVariant}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+          >
             <h2 className="text-sm font-medium text-[#d4a017] tracking-widest uppercase mb-3">
               Why Choose Aguaa?
             </h2>
@@ -540,7 +599,7 @@ const HomePage = () => {
               <Heart className="w-4 h-4 text-[#d4a017]" />
               <div className="h-px w-12 bg-gradient-to-l from-transparent to-[#d4a017]/50" />
             </div>
-          </div>
+          </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
@@ -575,7 +634,14 @@ const HomePage = () => {
                 desc: "Generate high-quality PDF biodatas instantly with a single click.",
               },
             ].map((feature, idx) => (
-              <div key={idx} data-aos="fade-up" data-aos-delay={idx * 100}>
+              <motion.div
+                key={idx}
+                variants={fadeUpVariant}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, amount: 0.15 }}
+                custom={idx * 0.1}
+              >
                 <div className="group relative p-8 rounded-3xl bg-[#1f1500] border-t-2 border-[#d4a017] border-x border-b border-[#d4a017]/20 hover:border-[#f0c040]/80 transition-all duration-300 hover:bg-[#2a1e08] hover:-translate-y-1 shadow-lg hover:shadow-[0_10px_40px_rgba(212,160,23,0.15)]">
                   <div className="absolute inset-0 bg-gradient-to-br from-[#d4a017]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-3xl" />
                   <feature.icon className="w-12 h-12 text-[#d4a017] mb-6 group-hover:scale-110 group-hover:text-[#f0c040] transition-all drop-shadow-md" />
@@ -586,7 +652,7 @@ const HomePage = () => {
                     {feature.desc}
                   </p>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -635,7 +701,13 @@ const HomePage = () => {
           }}
         />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center mb-20" data-aos="fade-up">
+          <motion.div
+            className="text-center mb-20"
+            variants={fadeUpVariant}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+          >
             <h2 className="text-sm font-medium text-[#d4a017] tracking-widest uppercase mb-3">
               Simple Process
             </h2>
@@ -645,7 +717,7 @@ const HomePage = () => {
             >
               How It <span className="text-[#f0c040] italic">Works</span>
             </h3>
-          </div>
+          </motion.div>
 
           <div className="grid md:grid-cols-4 gap-8 relative">
             {/* Animated Connecting Line */}
@@ -679,10 +751,13 @@ const HomePage = () => {
                 desc: "Download PDF or share your unique profile link.",
               },
             ].map((step, idx) => (
-              <div
+              <motion.div
                 key={idx}
-                data-aos="fade-up"
-                data-aos-delay={idx * 150}
+                variants={fadeUpVariant}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, amount: 0.15 }}
+                custom={idx * 0.15}
                 className="relative z-10 flex flex-col items-center text-center"
               >
                 <div className="w-24 h-24 rounded-full bg-[#1f1500] border-2 border-[#d4a017]/50 flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(212,160,23,0.2)] backdrop-blur-md relative group hover:border-[#f0c040] transition-colors">
@@ -698,7 +773,7 @@ const HomePage = () => {
                   {step.title}
                 </h4>
                 <p className="text-[#a89060] text-sm">{step.desc}</p>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -759,7 +834,13 @@ const HomePage = () => {
           }}
         />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center mb-12" data-aos="fade-up">
+          <motion.div
+            className="text-center mb-12"
+            variants={fadeUpVariant}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+          >
             <h2 className="text-sm font-medium text-[#d4a017] tracking-widest uppercase mb-3">
               Discover
             </h2>
@@ -801,7 +882,7 @@ const HomePage = () => {
                 ))}
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {loading ? (
             <div className="flex justify-center py-20">
@@ -834,14 +915,17 @@ const HomePage = () => {
           ) : (
             <div className="flex overflow-x-auto gap-5 pb-8 snap-x no-scrollbar px-4 -mx-4 lg:mx-0 lg:px-0 lg:grid lg:grid-cols-4">
               {filtered.slice(0, 8).map((biodata, idx) => (
-                <div
+                <motion.div
                   key={biodata._id}
-                  data-aos="fade-up"
-                  data-aos-delay={idx * 100}
+                  variants={fadeUpVariant}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true, amount: 0.1 }}
+                  custom={idx * 0.08}
                   className="min-w-[220px] lg:min-w-0 snap-center"
                 >
                   <BiodataCard biodata={biodata} />
-                </div>
+                </motion.div>
               ))}
             </div>
           )}
@@ -892,7 +976,13 @@ const HomePage = () => {
           }}
         />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center mb-16" data-aos="fade-up">
+          <motion.div
+            className="text-center mb-16"
+            variants={fadeUpVariant}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+          >
             <h2 className="text-sm font-medium text-[#d4a017] tracking-widest uppercase mb-3">
               Testimonials
             </h2>
@@ -902,7 +992,7 @@ const HomePage = () => {
             >
               Success <span className="text-[#f0c040] italic">Stories</span>
             </h3>
-          </div>
+          </motion.div>
 
           <Swiper
             modules={[Pagination, Autoplay]}
@@ -1034,7 +1124,13 @@ const HomePage = () => {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {/* ── Section Header ── */}
-          <div className="text-center mb-14" data-aos="fade-up">
+          <motion.div
+            className="text-center mb-14"
+            variants={fadeUpVariant}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+          >
             <div className="inline-flex items-center gap-3 mb-4">
               <div
                 className="h-px w-10"
@@ -1093,7 +1189,7 @@ const HomePage = () => {
                 ),
               )}
             </div>
-          </div>
+          </motion.div>
 
           {/* ── Pinterest Masonry Grid ── */}
           <div
@@ -1166,8 +1262,11 @@ const HomePage = () => {
               .map((item, idx) => (
                 <motion.div
                   key={idx}
-                  data-aos="fade-up"
-                  data-aos-delay={idx * 60}
+                  variants={fadeUpVariant}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true, amount: 0.1 }}
+                  custom={idx * 0.05}
                   className="relative overflow-hidden rounded-2xl group break-inside-avoid mb-4 cursor-pointer"
                   whileHover={{ y: -4 }}
                   transition={{ duration: 0.25 }}
@@ -1178,6 +1277,9 @@ const HomePage = () => {
                     src={item.src}
                     alt={`Indian ${item.tag.toLowerCase()} wedding photo — Aguaa matrimonial gallery`}
                     loading="lazy"
+                    decoding="async"
+                    width="400"
+                    height="500"
                     className="w-full h-auto object-cover block transition-transform duration-700 group-hover:scale-[1.06]"
                   />
 
@@ -1269,10 +1371,13 @@ const HomePage = () => {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-10 items-start">
             {/* Block 1: What is Aguaa? */}
-            <div
+            <motion.div
               className="rounded-2xl p-8 border border-[#d4a017]/20"
               style={{ background: "rgba(212,160,23,0.04)" }}
-              data-aos="fade-right"
+              variants={fadeUpVariant}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
             >
               <h2
                 className="text-2xl font-semibold text-white mb-3"
@@ -1295,13 +1400,17 @@ const HomePage = () => {
                 marriage biodatas, explore profiles, and find the perfect
                 rishta.
               </p>
-            </div>
+            </motion.div>
 
             {/* Block 2: How to make shaadi biodata */}
-            <div
+            <motion.div
               className="rounded-2xl p-8 border border-[#d4a017]/20"
               style={{ background: "rgba(212,160,23,0.04)" }}
-              data-aos="fade-left"
+              variants={fadeUpVariant}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+              custom={0.15}
             >
               <h2
                 className="text-2xl font-semibold text-white mb-3"
@@ -1347,11 +1456,17 @@ const HomePage = () => {
                   </li>
                 ))}
               </ol>
-            </div>
+            </motion.div>
           </div>
 
           {/* Trust + Keywords Row */}
-          <div className="mt-8 text-center" data-aos="fade-up">
+          <motion.div
+            className="mt-8 text-center"
+            variants={fadeUpVariant}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+          >
             <p className="text-xs text-[#a89060] leading-relaxed max-w-3xl mx-auto">
               Aguaa is the best matrimonial biodata maker for{" "}
               <a href="/explore" className="text-[#d4a017] hover:underline">
@@ -1369,7 +1484,7 @@ const HomePage = () => {
               wala platform, dulha dulhan biodata, विवाह बायोडाटा, शादी के लिए
               बायोडाटा।
             </p>
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -1426,7 +1541,13 @@ const HomePage = () => {
           }}
         />
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center mb-16" data-aos="fade-up">
+          <motion.div
+            className="text-center mb-16"
+            variants={fadeUpVariant}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+          >
             <h2 className="text-sm font-medium text-[#d4a017] tracking-widest uppercase mb-3">
               Got Questions?
             </h2>
@@ -1441,7 +1562,7 @@ const HomePage = () => {
               Marriage biodata ke baare mein aapke saare sawalo ke jawab yahan
               milenge.
             </p>
-          </div>
+          </motion.div>
 
           <div className="space-y-4">
             {[
@@ -1482,10 +1603,13 @@ const HomePage = () => {
                 a: "Yes! Our dedicated support team is available via WhatsApp and email. We help you every step of the matrimonial journey — from biodata creation to finding the perfect rishta.",
               },
             ].map((faq, idx) => (
-              <div
+              <motion.div
                 key={idx}
-                data-aos="fade-up"
-                data-aos-delay={idx * 50}
+                variants={fadeUpVariant}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, amount: 0.1 }}
+                custom={idx * 0.04}
                 className={`bg-[#1f1500] border-l-4 border-[#d4a017] rounded-r-xl rounded-bl-xl border-y border-r border-[#d4a017]/20 cursor-pointer transition-all duration-300 ${activeFaq === idx ? "shadow-md shadow-[#d4a017]/10" : "hover:bg-[#2a1e08]"}`}
                 onClick={() => setActiveFaq(activeFaq === idx ? null : idx)}
               >
@@ -1505,7 +1629,7 @@ const HomePage = () => {
                     {faq.a}
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -1557,9 +1681,12 @@ const HomePage = () => {
           }}
         />
 
-        <div
+        <motion.div
           className="max-w-5xl mx-auto px-4 relative z-10 text-center bg-[#1f1500]/60 backdrop-blur-xl border border-[#d4a017]/30 rounded-[3rem] py-20 shadow-[0_20px_60px_rgba(0,0,0,0.6)]"
-          data-aos="zoom-in"
+          variants={fadeUpVariant}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.15 }}
         >
           <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 bg-gradient-to-br from-[#d4a017] to-[#f0c040] rounded-full blur-2xl opacity-30" />
           <Sparkles className="w-12 h-12 text-[#f0c040] mx-auto mb-6 relative z-10" />
@@ -1598,7 +1725,7 @@ const HomePage = () => {
               </Button>
             </a>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* ================= FOOTER ================= */}

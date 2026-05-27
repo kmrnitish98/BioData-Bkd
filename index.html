@@ -7,7 +7,7 @@
          FAVICON & APP ICONS
     ═══════════════════════════════════════════════ -->
 
-    <link rel="icon" type="image/png" sizes="32x32" href="/logo-2.png" />
+    <link rel="icon" type="image/svg+xml" href="/" />
     <link rel="icon" type="image/png" sizes="32x32" href="/logo-2.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/logo-2.png" />
     <link rel="manifest" href="/manifest.json" crossorigin="use-credentials" />
@@ -40,10 +40,7 @@
     <!-- ═══════════════════════════════════════════════
          PRIMARY SEO META TAGS
     ═══════════════════════════════════════════════ -->
-    <title>
-      Aguaa — #1 Shaadi Biodata Maker | Marriage Biodata Platform | Bihar UP
-      Jharkhand
-    </title>
+    <title>Aguaa — Free Marriage Biodata Maker | Shaadi Biodata | Bihar UP Jharkhand</title>
     <meta
       name="description"
       content="Aguaa is India's most trusted marriage biodata maker platform. Create beautiful shaadi biodata in minutes. Serving Bihar, UP, Jharkhand families. Free matrimonial biodata PDF download. शादी के लिए बायोडाटा बनाएं — fast, secure & beautiful."
@@ -96,7 +93,8 @@
       content="Create beautiful marriage biodata in minutes. India's most trusted matrimonial biodata maker for Bihar, UP & Jharkhand families. Free PDF download. शादी के लिए बायोडाटा — Dil Se Rishta, Vishwas Se Shaadi."
     />
     <meta property="og:url" content="https://aguaa.in/" />
-    <meta property="og:image" content="https://aguaa.in/logo.png" />
+    <!-- og:image must be 1200×630 — use a dedicated banner, not the square logo -->
+    <meta property="og:image" content="/og-banner.webp" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta
@@ -120,7 +118,7 @@
       name="twitter:description"
       content="Create professional marriage biodata in minutes. Free PDF. Serving Bihar, UP, Jharkhand. शादी के लिए बायोडाटा बनाएं — Dil Se Rishta, Vishwas Se Shaadi."
     />
-    <meta name="twitter:image" content="https://aguaa.in/logo.png" />
+    <meta name="twitter:image" content="https://aguaa.in/og-banner.jpg" />
     <meta name="twitter:image:alt" content="Aguaa Marriage Biodata Platform" />
 
     <!-- ═══════════════════════════════════════════════
@@ -129,27 +127,40 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="dns-prefetch" href="https://images.unsplash.com" />
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+    <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+    <!-- Preload critical above-fold logo (WebP — 12.5 KB vs 122 KB PNG) -->
+    <link rel="preload" as="image" href="/logo.webp" type="image/webp" />
 
     <!-- ═══════════════════════════════════════════════
-         GOOGLE FONTS (Non-blocking load)
+         GOOGLE FONTS — Tiered Non-blocking Load
+         Tier 1: Critical above-fold fonts (Cormorant + Inter only)
+         Tier 2: Decorative & Hindi fonts deferred
     ═══════════════════════════════════════════════ -->
+
+    <!-- Tier 1: Critical fonts — preloaded for fast LCP -->
     <link
       rel="preload"
       as="style"
-      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Cinzel+Decorative:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@300;400;500;600;700&family=Mukta:wght@300;400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;600&display=swap"
     />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Cinzel+Decorative:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@300;400;500;600;700&family=Mukta:wght@300;400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;600&display=swap"
       media="print"
-      onload="this.media = 'all'"
+      onload="this.media='all'"
+    />
+
+    <!-- Tier 2: Decorative & Hindi fonts — deferred, non-blocking -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,500;0,700;1,500;1,600&family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=Inter:wght@300;500;700&family=Noto+Sans+Devanagari:wght@400;600&family=Mukta:wght@400;600&display=swap"
+      media="print"
+      onload="this.media='all'"
     />
     <noscript>
       <link
         rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@300;400;500;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;600&display=swap"
       />
     </noscript>
 
@@ -188,8 +199,8 @@
         "contactPoint": {
           "@type": "ContactPoint",
           "contactType": "customer service",
-          "availableLanguage": ["English", "Hindi"],
-          "contactOption": "TollFree"
+          "email": "support@aguaa.in",
+          "availableLanguage": ["English", "Hindi"]
         },
         "sameAs": [
           "https://www.facebook.com/aguaain",
@@ -249,13 +260,6 @@
         "openingHours": "Mo-Su 00:00-24:00",
         "areaServed": ["Bihar", "Uttar Pradesh", "Jharkhand", "India"],
         "hasMap": "https://maps.google.com/?q=Bihar,India",
-        "aggregateRating": {
-          "@type": "AggregateRating",
-          "ratingValue": "4.9",
-          "reviewCount": "10000",
-          "bestRating": "5",
-          "worstRating": "1"
-        },
         "sameAs": ["https://aguaa.in"]
       }
     </script>
@@ -272,17 +276,11 @@
         "applicationCategory": "LifestyleApplication",
         "description": "Create professional marriage biodata online. Download as PDF. Share on WhatsApp. Free matrimonial biodata maker for Indian families.",
         "url": "https://aguaa.in",
-        "screenshot": "https://aguaa.in/logo.png",
+        "screenshot": "https://aguaa.in/og-banner.jpg",
         "offers": {
           "@type": "Offer",
           "price": "0",
           "priceCurrency": "INR"
-        },
-        "aggregateRating": {
-          "@type": "AggregateRating",
-          "ratingValue": "4.9",
-          "reviewCount": "10000",
-          "bestRating": "5"
         },
         "featureList": [
           "Free marriage biodata creation",

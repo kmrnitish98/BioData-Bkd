@@ -2,16 +2,20 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { motion } from "framer-motion";
-import { Mail, Lock, Eye, EyeOff, Heart, AlertCircle } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { useGoogleLogin } from "@react-oauth/google";
 import { apiLogin, apiGoogleLogin } from "../api/client";
 import { useAuth } from "../hooks/useAuth";
+import { useToast } from "../context/ToastContext";
+import { emailRules } from "../utils/validation";
+import { getErrorMessage } from "../utils/apiError";
 import Button from "../components/ui/Button";
-import logo from "/logo-2.png";
+import logo from "/logo-2.webp";
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const toast = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState("");
   const [socialLoading, setSocialLoading] = useState(false);
@@ -25,11 +29,12 @@ const LoginPage = () => {
   const onSubmit = async (data) => {
     setAuthError("");
     try {
-      const { user } = await apiLogin(data.email, data.password);
+      const { user } = await apiLogin({ email: data.email, password: data.password });
       login(user);
+      toast.success(`Welcome back, ${user.name || 'back'}!`);
       navigate("/dashboard");
     } catch (err) {
-      setAuthError(err.message || "Sign in failed. Please try again.");
+      setAuthError(getErrorMessage(err, 'Sign in failed. Please try again.'));
     }
   };
 
@@ -40,14 +45,15 @@ const LoginPage = () => {
       try {
         const { user } = await apiGoogleLogin(tokenResponse.credential || tokenResponse.access_token);
         login(user);
+        toast.success(`Welcome, ${user.name || 'back'}!`);
         navigate("/dashboard");
       } catch (err) {
-        setAuthError(err.message || "Google login failed.");
+        setAuthError(getErrorMessage(err, 'Google login failed.'));
       } finally {
         setSocialLoading(false);
       }
     },
-    onError: () => setAuthError("Google login failed.")
+    onError: () => setAuthError("Google login failed. Please try again.")
   });
 
 
@@ -113,13 +119,7 @@ const LoginPage = () => {
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-red-900/60" />
                 <input
-                  {...register("email", {
-                    required: "Email is required",
-                    pattern: {
-                      value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                      message: "Invalid email",
-                    },
-                  })}
+                  {...register("email", emailRules)}
                   type="email"
                   placeholder="you@example.com"
                   className="w-full pl-11 pr-4 py-3 rounded-xl bg-red-950/30 border border-red-900/40 text-white placeholder-gray-700 focus:outline-none focus:border-yellow-700/50 transition-colors"
@@ -160,10 +160,17 @@ const LoginPage = () => {
                 </button>
               </div>
               {errors.password && (
-                <p className="text-red-400 text-xs mt-1">
-                  {errors.password.message}
-                </p>
+                <p className="text-red-400 text-xs mt-1">{errors.password.message}</p>
               )}
+              {/* Forgot password link */}
+              <div className="flex justify-end mt-1.5">
+                <Link
+                  to="/forgot-password"
+                  className="text-xs text-yellow-700/60 hover:text-yellow-500 transition-colors"
+                >
+                  Forgot password?
+                </Link>
+              </div>
             </div>
 
             <Button

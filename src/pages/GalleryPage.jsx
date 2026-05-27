@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { useSEO } from '../hooks/useSEO';
 import {
   Heart, Upload, X, Image as ImageIcon, Sparkles, Home,
   ChevronLeft, Camera, Trash2, ZoomIn, Download, Share2,
@@ -276,7 +277,7 @@ const Lightbox = ({ image, onClose, onPrev, onNext }) => (
       className="max-w-4xl max-h-[85vh] rounded-2xl overflow-hidden relative"
       style={{ border: '1px solid rgba(212,160,23,0.3)', boxShadow: '0 25px 80px rgba(0,0,0,0.9)' }}
     >
-      <img src={image.src} alt={image.tag} className="max-w-full max-h-[85vh] object-contain" />
+      <img src={image.src} alt={image.tag} width="1200" height="900" decoding="async" className="max-w-full max-h-[85vh] object-contain" />
       <div className="absolute bottom-0 left-0 right-0 px-6 py-4"
         style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.9), transparent)' }}>
         <div className="flex items-center justify-between">
@@ -301,6 +302,8 @@ const Lightbox = ({ image, onClose, onPrev, onNext }) => (
 
 // ── Main Gallery Page
 const GalleryPage = () => {
+  useSEO('/gallery');
+
   const [images, setImages] = useState(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
@@ -493,6 +496,9 @@ const GalleryPage = () => {
                     src={item.src}
                     alt={item.tag}
                     loading="lazy"
+                    decoding="async"
+                    width="600"
+                    height="800"
                     onClick={() => setLightbox(item.id)}
                     className="w-full h-auto object-cover block transition-transform duration-700 group-hover:scale-[1.06]"
                   />

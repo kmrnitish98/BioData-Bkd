@@ -2,8 +2,12 @@
  * SchemaMarkup.jsx — JSON-LD Structured Data Component for Aguaa
  *
  * Renders <script type="application/ld+json"> tags for rich results.
- * Supports: FAQPage, BreadcrumbList, Organization, LocalBusiness,
- *           AggregateRating, Review, Offer, SoftwareApplication
+ * Supports: FAQPage, BreadcrumbList, ProfilePage (Person)
+ *
+ * ⚠️  NOTE: AggregateRating / ReviewSchema has been REMOVED.
+ *     Google requires AggregateRating to be backed by real, verifiable
+ *     reviews on your site. Fake review counts (e.g. 10,000) trigger
+ *     a manual penalty. Use this only after collecting real reviews.
  */
 
 import { useEffect } from 'react';
@@ -30,6 +34,7 @@ function SchemaMarkup({ id, schema }) {
       const el = document.getElementById(id);
       if (el) el.remove();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, JSON.stringify(schema)]);
 
   return null;
@@ -74,35 +79,40 @@ export function BreadcrumbSchema({ items }) {
   return <SchemaMarkup id="schema-breadcrumb" schema={schema} />;
 }
 
-/** Review / AggregateRating Schema */
-export function ReviewSchema({ ratingValue = '4.9', reviewCount = '10000' }) {
+/**
+ * ProfilePage (Person) Schema — used on individual /profile/:id pages.
+ * Helps Google understand the profile is for a real person's marriage biodata.
+ * Does NOT include AggregateRating (not applicable to individual profiles).
+ *
+ * @param {Object} biodata — the biodata object from the API
+ */
+export function PersonProfileSchema({ biodata }) {
+  if (!biodata?.personalInfo?.fullName) return null;
+
+  const { personalInfo = {}, educationInfo = {}, photoURL } = biodata;
+  const name = personalInfo.fullName;
+  const age  = personalInfo.age || '';
+  const city = personalInfo.city || personalInfo.presentAddress || '';
+
   const schema = {
     '@context': 'https://schema.org',
-    '@type': 'Product',
-    name: 'Aguaa — Marriage Biodata Platform',
-    description:
-      "India's trusted online marriage biodata maker for Bihar, UP, Jharkhand families.",
-    image: 'https://aguaa.in/logo.png',
-    brand: {
-      '@type': 'Brand',
-      name: 'Aguaa',
-    },
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue,
-      bestRating: '5',
-      worstRating: '1',
-      reviewCount,
-    },
-    offers: {
-      '@type': 'Offer',
-      price: '0',
-      priceCurrency: 'INR',
-      availability: 'https://schema.org/InStock',
-      url: 'https://aguaa.in/pricing',
+    '@type': 'ProfilePage',
+    name: `${name}'s Marriage Biodata`,
+    description: `View ${name}'s verified marriage biodata on Aguaa${age ? ` (${age} years)` : ''}${city ? ` from ${city}` : ''}. Looking for a loving life partner.`,
+    url: `https://aguaa.in/profile/${biodata._id}`,
+    mainEntity: {
+      '@type': 'Person',
+      name,
+      ...(age          ? { age }                                   : {}),
+      ...(city         ? { homeLocation: { '@type': 'Place', name: city } } : {}),
+      ...(educationInfo.highestQualification
+                       ? { hasCredential: { '@type': 'EducationalOccupationalCredential', credentialCategory: educationInfo.highestQualification } }
+                       : {}),
+      ...(photoURL     ? { image: photoURL }                        : {}),
     },
   };
-  return <SchemaMarkup id="schema-review" schema={schema} />;
+
+  return <SchemaMarkup id="schema-profile-person" schema={schema} />;
 }
 
 /** Pricing / Offer Schema */

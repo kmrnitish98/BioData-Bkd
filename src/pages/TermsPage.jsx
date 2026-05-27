@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { FileText, Scale, Shield, ChevronLeft, AlertCircle } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
+import { useSEO } from '../hooks/useSEO';
 
 const sections = [
   { id: "acceptance", title: "Acceptance of Terms" },
@@ -28,6 +29,8 @@ const fadeUp = {
 };
 
 export default function TermsPage() {
+  useSEO('/terms');
+
   const [activeSection, setActiveSection] = useState("acceptance");
   const observerRef = useRef(null);
 

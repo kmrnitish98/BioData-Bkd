@@ -13,10 +13,10 @@ export const SITE = {
   description: "India's Trusted Marriage Biodata Platform",
   url: 'https://aguaa.in',
   logo: 'https://aguaa.in/logo.png',
-  ogImage: 'https://aguaa.in/logo.png',
+  ogImage: 'https://aguaa.in/og-banner.jpg',
   twitterHandle: '@aguaa_in',
   email: 'support@aguaa.in',
-  phone: '+91-XXXXXXXXXX',
+  phone: '',   // Add real phone when available — do not leave placeholder in structured data
   region: 'Bihar, Uttar Pradesh, Jharkhand, India',
 };
 
@@ -67,18 +67,18 @@ export const PAGE_SEO = {
     ],
   },
   '/gallery': {
-    title: 'Wedding Gallery — Beautiful Indian Marriage Photos | Aguaa',
+    title: 'Biodata Template Gallery — Premium Shaadi Biodata Designs | Aguaa',
     description:
-      'Explore our curated gallery of beautiful Indian wedding moments. Ceremony, portraits, mehendi, reception — share your wedding story on Aguaa.',
+      'Browse Aguaa\'s gallery of premium marriage biodata templates. Traditional royal designs and modern layouts for Hindu, Muslim, and Sikh families from Bihar, UP & Jharkhand.',
     keywords:
-      'Indian wedding gallery, wedding photos, shaadi photos, marriage ceremony, mehendi photos, Indian wedding pictures, Bihar wedding',
+      'biodata template, shaadi biodata design, marriage biodata format, premium biodata template, Hindu biodata, Muslim biodata, Bihar biodata template',
     canonical: 'https://aguaa.in/gallery',
     ogType: 'website',
     schema: 'gallery',
     noIndex: false,
     breadcrumb: [
       { name: 'Home', url: 'https://aguaa.in/' },
-      { name: 'Wedding Gallery', url: 'https://aguaa.in/gallery' },
+      { name: 'Biodata Templates', url: 'https://aguaa.in/gallery' },
     ],
   },
   '/pricing': {
@@ -183,6 +183,20 @@ export const PAGE_SEO = {
     title: 'My Dashboard — Aguaa',
     description: 'Manage your marriage biodata on Aguaa.',
     canonical: 'https://aguaa.in/dashboard',
+    schema: null,
+    noIndex: true,
+  },
+  '/edit': {
+    title: 'Edit Marriage Biodata — Aguaa',
+    description: 'Update your marriage biodata on Aguaa.',
+    canonical: 'https://aguaa.in/dashboard',
+    schema: null,
+    noIndex: true,
+  },
+  '/404': {
+    title: 'Page Not Found | Aguaa',
+    description: 'The page you are looking for does not exist on Aguaa.',
+    canonical: 'https://aguaa.in/',
     schema: null,
     noIndex: true,
   },
@@ -295,21 +309,3 @@ export function generateBreadcrumbSchema(items) {
     })),
   };
 }
-
-/**
- * Aggregate rating schema
- */
-export const AGGREGATE_RATING_SCHEMA = {
-  '@context': 'https://schema.org',
-  '@type': 'AggregateRating',
-  itemReviewed: {
-    '@type': 'WebApplication',
-    name: 'Aguaa',
-    url: 'https://aguaa.in',
-  },
-  ratingValue: '4.9',
-  bestRating: '5',
-  worstRating: '1',
-  ratingCount: '10000',
-  reviewCount: '8500',
-};

@@ -1,49 +1,104 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { PlusCircle, Trash2, Eye, Globe, Lock, AlertTriangle, LayoutDashboard } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  PlusCircle, Trash2, Eye, Globe, Lock,
+  AlertTriangle, LayoutDashboard, RefreshCw,
+  Pencil, BarChart3,
+} from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useBiodata } from '../hooks/useBiodata';
+import { useToast } from '../context/ToastContext';
+import { getErrorMessage } from '../utils/apiError';
 import Button from '../components/ui/Button';
+import EmptyState from '../components/ui/EmptyState';
+import TrustBar from '../components/ui/TrustBar';
+import { SkeletonDashboard } from '../components/ui/Skeleton';
+
+/* ── Animated counter ─────────────────────────────────────────── */
+const AnimatedCount = ({ value, suffix = '' }) => {
+  const [display, setDisplay] = useState(0);
+  useEffect(() => {
+    if (!value) return;
+    let start = 0;
+    const step = Math.ceil(value / 20);
+    const timer = setInterval(() => {
+      start += step;
+      if (start >= value) { setDisplay(value); clearInterval(timer); }
+      else setDisplay(start);
+    }, 30);
+    return () => clearInterval(timer);
+  }, [value]);
+  // aria-live=polite: announces the final value after animation completes
+  return <span aria-live="polite" aria-atomic="true">{display}{suffix}</span>;
+};
+
+/* ── Stat chip ────────────────────────────────────────────────── */
+const StatChip = ({ icon: Icon, label, value, color }) => (
+  <div
+    className="stat-chip"
+    role="status"
+    aria-label={`${value} ${label} biodatas`}
+  >
+    <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${color}`} aria-hidden="true" />
+    <span className="font-semibold text-white">
+      <AnimatedCount value={value} />
+    </span>
+    <span className="text-gray-500" aria-hidden="true">{label}</span>
+  </div>
+);
 
 const DashboardPage = () => {
   const { currentUser } = useAuth();
   const { fetchByUser, remove, update, loading } = useBiodata();
-  const [biodatas, setBiodatas] = useState([]);
+  const toast = useToast();
+  const [biodatas, setBiodatas]     = useState([]);
+  const [fetchError, setFetchError] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
-  const [actionError, setActionError] = useState(null);
+  const [togglingId, setTogglingId] = useState(null);
 
-  useEffect(() => {
-    // fetchByUser no longer needs userId — server reads it from JWT
-    fetchByUser().then(setBiodatas).catch(() => setBiodatas([]));
-  }, [fetchByUser]);
+  const publicCount  = useMemo(() => biodatas.filter((b) => b.isPublic).length, [biodatas]);
+  const privateCount = useMemo(() => biodatas.length - publicCount, [biodatas, publicCount]);
+
+  const loadBiodatas = () => {
+    setFetchError(null);
+    fetchByUser()
+      .then(result => setBiodatas(Array.isArray(result) ? result : (result.data || [])))
+      .catch((err) => {
+        setFetchError(getErrorMessage(err, 'Failed to load your biodatas.'));
+        setBiodatas([]);
+      });
+  };
+
+  useEffect(() => { loadBiodatas(); }, [fetchByUser]);
 
   const handleTogglePublic = async (id, current) => {
-    // Optimistic update
+    setTogglingId(id);
     setBiodatas((prev) =>
       prev.map((b) => (b._id === id ? { ...b, isPublic: !current } : b))
     );
-    setActionError(null);
     try {
       await update(id, { isPublic: !current });
+      toast.success(current ? 'Biodata set to private.' : 'Biodata is now public!');
     } catch (err) {
-      // Rollback on failure
       setBiodatas((prev) =>
         prev.map((b) => (b._id === id ? { ...b, isPublic: current } : b))
       );
-      setActionError('Failed to update visibility. Please try again.');
+      toast.error(getErrorMessage(err, 'Failed to update visibility.'));
+    } finally {
+      setTogglingId(null);
     }
   };
 
   const handleDelete = async (id) => {
     setDeletingId(id);
-    setActionError(null);
     try {
       await remove(id);
       setBiodatas((prev) => prev.filter((b) => b._id !== id));
+      toast.success('Biodata deleted successfully.');
     } catch (err) {
-      setActionError('Failed to delete biodata. Please try again.');
+      toast.error(getErrorMessage(err, 'Failed to delete. Please try again.'));
     } finally {
       setDeletingId(null);
       setConfirmDelete(null);
@@ -51,194 +106,245 @@ const DashboardPage = () => {
   };
 
   return (
-    <div className="min-h-screen pt-24 pb-16 px-4">
+    <div className="min-h-screen pt-24 pb-16 px-4 page-enter">
       <div className="fixed inset-0 bg-gradient-to-br from-[#0d0000] via-[#150000] to-[#0d0000] -z-10" />
 
       <div className="max-w-5xl mx-auto">
-        {/* Header */}
+
+        {/* ── Header ─────────────────────────────────────────── */}
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: -16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10"
+          transition={{ duration: 0.5 }}
+          className="mb-8"
         >
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <LayoutDashboard className="w-5 h-5 text-yellow-600" />
+          {/* Top row */}
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-5">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <LayoutDashboard className="w-5 h-5 text-yellow-600/80" />
+                <p className="text-xs font-semibold tracking-[0.2em] uppercase text-yellow-700/60">
+                  Dashboard
+                </p>
+              </div>
               <h1
-                className="text-3xl font-light text-white"
+                className="text-3xl sm:text-4xl font-light text-white leading-tight"
                 style={{ fontFamily: 'Playfair Display, serif' }}
               >
-                My <span className="text-yellow-400">Biodatas</span>
+                Welcome back,{' '}
+                <span className="text-gradient-gold">{currentUser?.name?.split(' ')[0] || 'User'}</span>
               </h1>
+              <p className="text-gray-500 text-sm mt-1">
+                Manage and publish your marriage profiles
+              </p>
             </div>
-            <p className="text-gray-400 text-sm">
-              Welcome back, {currentUser?.name || 'User'} · {biodatas.length} biodata{biodatas.length !== 1 ? 's' : ''}
-            </p>
-          </div>
-          <Link to="/create">
-            <Button variant="gold" size="md">
-              <PlusCircle className="w-4 h-4" />
-              Create New
-            </Button>
-          </Link>
-        </motion.div>
-
-        {/* Action error banner */}
-        {actionError && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6 flex items-center gap-2 px-4 py-3 rounded-xl bg-red-950/60 border border-red-800/40 text-red-300 text-sm"
-          >
-            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-            {actionError}
-            <button
-              onClick={() => setActionError(null)}
-              className="ml-auto text-red-400 hover:text-white transition-colors"
-              aria-label="Dismiss error"
-            >
-              ×
-            </button>
-          </motion.div>
-        )}
-
-        {/* Empty State */}
-        {!loading && biodatas.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center py-32 glass-card rounded-3xl border border-yellow-900/20"
-          >
-            <div className="relative w-32 h-32 mx-auto mb-6">
-              <div className="absolute inset-0 bg-yellow-900/10 rounded-full blur-xl animate-pulse" />
-              <div className="absolute inset-0 border border-yellow-700/20 rounded-full flex items-center justify-center bg-gradient-to-b from-red-950/40 to-transparent">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-yellow-600/60">
-                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                  <path d="M12 8v4" />
-                  <path d="M10 10h4" />
-                </svg>
-              </div>
-            </div>
-            <h2 className="text-2xl text-white font-light mb-3" style={{ fontFamily: 'Playfair Display, serif', letterSpacing: '0.05em' }}>
-              Your Journey Begins Here
-            </h2>
-            <p className="text-yellow-600/70 text-sm mb-8 max-w-md mx-auto italic" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-              "Create a beautiful, print-ready marriage profile that reflects your true essence and family values."
-            </p>
-            <Link to="/create">
+            <Link to="/create" className="flex-shrink-0">
               <Button variant="gold" size="md">
                 <PlusCircle className="w-4 h-4" />
-                Create Your First Biodata
+                Create New
               </Button>
             </Link>
-          </motion.div>
-        )}
+          </div>
 
-        {/* Loading */}
-        {loading && (
-          <div className="text-center py-20">
-            <div className="inline-block w-10 h-10 border-4 border-yellow-700/30 border-t-yellow-500 rounded-full animate-spin" />
+          {/* Stat chips row */}
+          {!loading && biodatas.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="flex flex-wrap gap-2"
+            >
+              <StatChip icon={BarChart3} label="total"   value={biodatas.length} color="text-yellow-500" />
+              <StatChip icon={Globe}     label="public"  value={publicCount}      color="text-emerald-400" />
+              <StatChip icon={Lock}      label="private" value={privateCount}     color="text-gray-400" />
+            </motion.div>
+          )}
+        </motion.div>
+
+        {/* ── Trust bar (first-time users see it) ────────────── */}
+        {!loading && biodatas.length === 0 && !fetchError && (
+          <div className="mb-6">
+            <TrustBar />
+            <div className="sep-gold mt-4" />
           </div>
         )}
 
-        {/* Biodata List */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {biodatas.map((biodata, i) => {
-            const name = biodata.personalInfo?.fullName || 'Unnamed';
-            const city = biodata.personalInfo?.city || '';
-            const education = biodata.educationInfo?.highestQualification || '';
-            const initials = name.split(' ').filter(Boolean).map((n) => n[0]).join('').slice(0, 2).toUpperCase();
-
-            return (
-              <motion.div
-                key={biodata._id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.08 }}
-                className="glass-card rounded-2xl overflow-hidden border border-yellow-900/10"
+        {/* ── Fetch error ─────────────────────────────────────── */}
+        <AnimatePresence>
+          {fetchError && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="mb-6 flex items-start gap-3 px-4 py-4 rounded-2xl bg-red-950/50 border border-red-800/30 text-red-300 text-sm"
+            >
+              <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5 text-red-400" />
+              <div className="flex-1 text-sm leading-relaxed">{fetchError}</div>
+              <button
+                onClick={loadBiodatas}
+                aria-label="Retry loading biodatas"
+                className="flex items-center gap-1.5 text-yellow-500 hover:text-yellow-400 text-xs font-medium transition-colors flex-shrink-0"
               >
-                {/* Card Header */}
-                <div className="flex items-center gap-4 p-6 border-b border-red-900/20">
-                  {biodata.photoURL ? (
-                    <img
-                      src={biodata.photoURL}
-                      alt={name}
-                      className="w-12 h-16 rounded-md object-cover border-2 border-yellow-700/30"
-                    />
-                  ) : (
-                    <div className="w-12 h-16 rounded-md bg-gradient-to-br from-red-900 to-[#200000] border-2 border-yellow-700/20 flex items-center justify-center">
-                      <span className="text-lg font-bold text-yellow-500" style={{ fontFamily: 'Playfair Display, serif' }}>
-                        {initials}
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-white truncate" style={{ fontFamily: 'Playfair Display, serif' }}>
-                      {name}
-                    </h3>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      {city && <span>{city}</span>}
-                      {city && education && <span>·</span>}
-                      {education && <span className="truncate">{education}</span>}
-                    </div>
-                  </div>
-                  <span className={`flex-shrink-0 flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border ${biodata.isPublic ? 'bg-yellow-900/20 border-yellow-800/40 text-yellow-500' : 'bg-gray-900/40 border-gray-800/40 text-gray-500'}`}>
-                    {biodata.isPublic ? <Globe className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
-                    {biodata.isPublic ? 'Public' : 'Private'}
-                  </span>
-                </div>
+                <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
+                Retry
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-                {/* Actions */}
-                <div className="flex items-center justify-between px-6 py-4 gap-3">
-                  <div className="flex gap-2">
-                    <Link to={`/profile/${biodata._id}`}>
-                      <Button variant="ghost" size="sm">
-                        <Eye className="w-4 h-4" />
-                        View
-                      </Button>
-                    </Link>
-                    <Link to={`/edit/${biodata._id}`}>
-                      <Button variant="ghost" size="sm">
-                        Edit
-                      </Button>
-                    </Link>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleTogglePublic(biodata._id, biodata.isPublic)}
+        {/* ── Skeleton ──────────────────────────────────────── */}
+        {loading && <SkeletonDashboard />}
+
+        {/* ── Empty state ─────────────────────────────────────── */}
+        {!loading && !fetchError && biodatas.length === 0 && (
+          <div className="glass-card rounded-3xl border border-yellow-900/15">
+            <EmptyState
+              emoji="💍"
+              title="Your Journey Begins Here"
+              description="Create a beautiful, print-ready marriage profile that reflects your true essence and family values."
+              action={{ label: 'Create Your First Biodata', to: '/create', variant: 'gold' }}
+              secondaryAction={{ label: 'Explore Profiles', to: '/explore', variant: 'ghost' }}
+            />
+          </div>
+        )}
+
+        {/* ── Biodata cards ───────────────────────────────────── */}
+        {!loading && biodatas.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {biodatas.map((biodata, i) => {
+              const name       = biodata.personalInfo?.fullName || 'Unnamed';
+              const city       = biodata.personalInfo?.city || '';
+              const education  = biodata.educationInfo?.highestQualification || '';
+              const initials   = name.split(' ').filter(Boolean).map((n) => n[0]).join('').slice(0, 2).toUpperCase();
+              const isToggling = togglingId === biodata._id;
+              const isDeleting = deletingId === biodata._id;
+
+              return (
+                <motion.div
+                  key={biodata._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.97 }}
+                  transition={{ delay: i * 0.07, duration: 0.4 }}
+                  className="glass-card card-lift rounded-2xl overflow-hidden border border-yellow-900/10"
+                >
+                  {/* ── Card header ── */}
+                  <div className="flex items-center gap-4 p-5 sm:p-6 border-b border-red-900/15">
+                    {/* Avatar */}
+                    {biodata.photoURL ? (
+                      <img
+                        src={biodata.photoURL}
+                        alt={name}
+                        className="w-12 h-16 rounded-xl object-cover border-2 border-yellow-700/25 flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-12 h-16 rounded-xl bg-gradient-to-br from-red-900 to-[#1a0000] border-2 border-yellow-800/20 flex items-center justify-center flex-shrink-0">
+                        <span className="text-lg font-bold text-yellow-600/80" style={{ fontFamily: 'Playfair Display, serif' }}>
+                          {initials}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Name / meta */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-base sm:text-lg font-semibold text-white truncate" style={{ fontFamily: 'Playfair Display, serif' }}>
+                        {name}
+                      </h3>
+                      <p className="text-xs text-gray-500 truncate mt-0.5">
+                        {[city, education].filter(Boolean).join(' · ') || 'No details yet'}
+                      </p>
+                    </div>
+
+                    {/* Visibility badge */}
+                    <span
+                      className={`flex-shrink-0 flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full border font-medium transition-all duration-200
+                        ${isToggling ? 'opacity-40' : ''}
+                        ${biodata.isPublic
+                          ? 'bg-emerald-900/20 border-emerald-800/30 text-emerald-400'
+                          : 'bg-gray-900/40 border-gray-800/30 text-gray-500'
+                        }`}
                     >
-                      {biodata.isPublic ? <Lock className="w-4 h-4" /> : <Globe className="w-4 h-4" />}
-                      {biodata.isPublic ? 'Make Private' : 'Make Public'}
-                    </Button>
+                      {biodata.isPublic ? <Globe className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
+                      <span className="hidden sm:inline">{biodata.isPublic ? 'Public' : 'Private'}</span>
+                    </span>
                   </div>
 
-                  {confirmDelete === biodata._id ? (
-                    <div className="flex items-center gap-2">
-                      <span className="text-red-400 text-xs flex items-center gap-1">
-                        <AlertTriangle className="w-3 h-3" /> Confirm?
-                      </span>
+                  {/* ── Actions ── */}
+                  <div className="flex items-center justify-between px-5 sm:px-6 py-3.5 gap-2">
+                    {/* Left: view / edit / toggle */}
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <Link to={`/profile/${biodata._id}`}>
+                        <Button variant="ghost" size="sm" aria-label={`View profile for ${name}`}>
+                          <Eye className="w-4 h-4" aria-hidden="true" />
+                          <span className="hidden sm:inline">View</span>
+                        </Button>
+                      </Link>
+                      <Link to={`/edit/${biodata._id}`}>
+                        <Button variant="ghost" size="sm" aria-label={`Edit profile for ${name}`}>
+                          <Pencil className="w-4 h-4" aria-hidden="true" />
+                          <span className="hidden sm:inline">Edit</span>
+                        </Button>
+                      </Link>
                       <Button
-                        variant="danger"
+                        variant="ghost"
                         size="sm"
-                        loading={deletingId === biodata._id}
-                        onClick={() => handleDelete(biodata._id)}
+                        loading={isToggling}
+                        aria-label={biodata.isPublic ? `Make ${name} profile private` : `Make ${name} profile public`}
+                        onClick={() => handleTogglePublic(biodata._id, biodata.isPublic)}
                       >
-                        Yes, Delete
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(null)}>
-                        Cancel
+                        {!isToggling && (biodata.isPublic ? <Lock className="w-4 h-4" aria-hidden="true" /> : <Globe className="w-4 h-4" aria-hidden="true" />)}
+                        <span className="hidden sm:inline">
+                          {biodata.isPublic ? 'Make Private' : 'Make Public'}
+                        </span>
                       </Button>
                     </div>
-                  ) : (
-                    <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(biodata._id)} className="text-red-700 hover:text-red-400">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
+
+                    {/* Right: delete confirm */}
+                    <AnimatePresence mode="wait">
+                      {confirmDelete === biodata._id ? (
+                        <motion.div
+                          key="confirm"
+                          initial={{ opacity: 0, x: 10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 10 }}
+                          className="flex items-center gap-2"
+                        >
+                          <span className="text-red-400 text-xs hidden sm:flex items-center gap-1">
+                            <AlertTriangle className="w-3 h-3" aria-hidden="true" /> Sure?
+                          </span>
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            loading={isDeleting}
+                            aria-label={`Confirm delete ${name}`}
+                            onClick={() => handleDelete(biodata._id)}
+                          >
+                            Delete
+                          </Button>
+                          <Button variant="ghost" size="sm" aria-label="Cancel delete" onClick={() => setConfirmDelete(null)}>
+                            No
+                          </Button>
+                        </motion.div>
+                      ) : (
+                        <motion.div key="delete" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setConfirmDelete(biodata._id)}
+                            className="text-red-800/70 hover:text-red-400"
+                            aria-label={`Delete ${name}`}
+                          >
+                            <Trash2 className="w-4 h-4" aria-hidden="true" />
+                          </Button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

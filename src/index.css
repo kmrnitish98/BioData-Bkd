@@ -495,4 +495,118 @@
     background-color: #180000;
     color: white;
   }
+
+  /* ─── Card Lift — hover elevation ────────────────────────── */
+  .card-lift {
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+                border-color 0.25s ease;
+  }
+  .card-lift:hover {
+    transform: translateY(-4px);
+    box-shadow:
+      0 20px 60px rgba(0, 0, 0, 0.65),
+      0 0 0 1px rgba(184, 134, 11, 0.18),
+      0 0 30px rgba(184, 134, 11, 0.08);
+    border-color: rgba(184, 134, 11, 0.22) !important;
+  }
+
+  /* ─── Input Glow — focused form inputs ───────────────────── */
+  .input-glow:focus {
+    border-color: rgba(184, 134, 11, 0.55) !important;
+    box-shadow: 0 0 0 3px rgba(184, 134, 11, 0.08),
+                0 0 16px rgba(184, 134, 11, 0.12);
+    outline: none;
+  }
+
+  /* ─── Scrollbar hidden — filter chips, horizontal scroll ─── */
+  .scrollbar-hidden {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-hidden::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* ─── Live badge — pulsing green dot ─────────────────────── */
+  .badge-live::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #22c55e;
+    margin-right: 6px;
+    animation: live-pulse 2s ease-in-out infinite;
+    vertical-align: middle;
+  }
+  @keyframes live-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.5; transform: scale(0.75); }
+  }
+
+  /* ─── Page enter animation ────────────────────────────────── */
+  .page-enter {
+    animation: page-fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @keyframes page-fade-up {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─── Ripple effect ──────────────────────────────────────── */
+  .ripple-container {
+    position: relative;
+    overflow: hidden;
+  }
+  .ripple-container::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+    transform: scale(0);
+    opacity: 0;
+    transition: transform 0.4s ease, opacity 0.4s ease;
+    border-radius: inherit;
+    pointer-events: none;
+  }
+  .ripple-container:active::after {
+    transform: scale(2.5);
+    opacity: 1;
+    transition: transform 0s, opacity 0s;
+  }
+
+  /* ─── Stat chip ──────────────────────────────────────────── */
+  .stat-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    background: rgba(20, 4, 4, 0.7);
+    border: 1px solid rgba(184, 134, 11, 0.2);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: rgba(212, 160, 23, 0.85);
+    backdrop-filter: blur(8px);
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .stat-chip:hover {
+    border-color: rgba(184, 134, 11, 0.4);
+    background: rgba(30, 8, 4, 0.8);
+  }
+
+  /* ─── Soft section separator ─────────────────────────────── */
+  .sep-gold {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(184, 134, 11, 0.35), transparent);
+  }
+
+  /* ─── Gradient text utility ──────────────────────────────── */
+  .text-gradient-gold {
+    background: linear-gradient(135deg, #d4a017 0%, #f0c040 50%, #b8860b 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
 }

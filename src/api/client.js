@@ -1,106 +1,46 @@
-// Central API base URL — reads from Vite env or falls back to localhost
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
-
 /**
- * Core fetch wrapper. Automatically attaches the secure cookie
- * and handles JSON parsing + error extraction.
+ * client.js — Legacy compatibility shim.
+ *
+ * All imports that previously did:
+ *   import { apiLogin, apiGetMe } from '../api/client'
+ * continue to work WITHOUT ANY CHANGES.
+ *
+ * The actual implementations have moved to:
+ *   src/api/http.js     — core transport (retry, abort, timeout, logging)
+ *   src/api/auth.js     — auth domain functions
+ *   src/api/biodata.js  — biodata domain functions
+ *   src/api/index.js    — public barrel
+ *
+ * Migration path (gradual, non-breaking):
+ *   Step 1 (now):  All functions re-exported here. Nothing breaks.
+ *   Step 2 (next): Update individual files to import from '../api' directly.
+ *   Step 3 (later): Delete this shim once all callers are migrated.
  */
-const request = async (endpoint, options = {}) => {
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(options.headers || {}),
-  };
 
-  const res = await fetch(`${BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-    credentials: 'include', // Send cookies
-  });
+export {
+  // Auth
+  signUp      as apiSignUp,
+  login       as apiLogin,
+  googleLogin as apiGoogleLogin,
+  logout      as apiLogout,
+  getMe       as apiGetMe,
+  forgotPassword     as apiForgotPassword,
+  resetPassword      as apiResetPassword,
+  verifyEmail        as apiVerifyEmail,
+  resendVerification as apiResendVerification,
+} from './auth';
 
-  let data;
-  try {
-    data = await res.json();
-  } catch {
-    data = { message: 'Server returned an unexpected response' };
-  }
+export {
+  // Biodata
+  getPublicBiodatas  as apiGetPublicBiodatas,
+  getBiodataById     as apiGetBiodataById,
+  getPrivateBiodata  as apiGetPrivateBiodata,
+  getMyBiodatas      as apiGetMyBiodatas,
+  createBiodata      as apiCreateBiodata,
+  updateBiodata      as apiUpdateBiodata,
+  deleteBiodata      as apiDeleteBiodata,
+  uploadPhoto        as apiUploadPhoto,
+} from './biodata';
 
-  if (!res.ok) {
-    const err = new Error(data.message || 'Request failed');
-    err.status = res.status;
-    throw err;
-  }
-
-  return data;
-};
-
-// ── Auth ─────────────────────────────────────────────────────────────────────
-
-export const apiSignUp = (name, email, password) =>
-  request('/auth/signup', { method: 'POST', body: JSON.stringify({ name, email, password }) });
-
-export const apiLogin = (email, password) =>
-  request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
-
-export const apiGoogleLogin = (token) =>
-  request('/auth/google', { method: 'POST', body: JSON.stringify({ token }) });
-
-export const apiLogout = () => request('/auth/logout', { method: 'POST' });
-
-export const apiGetMe = () => request('/auth/me');
-
-// ── Biodata ───────────────────────────────────────────────────────────────────
-
-export const apiGetPublicBiodatas = () => request('/biodata/public');
-
-export const apiGetBiodataById = (id) => request(`/biodata/${id}`);
-
-export const apiGetPrivateBiodata = (id) => request(`/biodata/user/${id}/private`);
-
-export const apiGetMyBiodatas = () => request('/biodata/user/me');
-
-export const apiCreateBiodata = (data) =>
-  request('/biodata', { method: 'POST', body: JSON.stringify(data) });
-
-export const apiUpdateBiodata = (id, data) =>
-  request(`/biodata/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
-
-export const apiDeleteBiodata = (id) => request(`/biodata/${id}`, { method: 'DELETE' });
-
-// ── Photo Upload ──────────────────────────────────────────────────────────────
-
-/**
- * Upload a photo file to the backend (which forwards to Cloudinary).
- * Uses FormData — no Content-Type header (browser sets multipart boundary automatically).
- */
-export const apiUploadPhoto = async (file, onProgress) => {
-  const formData = new FormData();
-  formData.append('photo', file);
-
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', `${BASE_URL}/biodata/upload-photo`);
-    xhr.withCredentials = true; // Send cookies
-
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable && onProgress) {
-        onProgress(Math.round((e.loaded / e.total) * 100));
-      }
-    };
-
-    xhr.onload = () => {
-      try {
-        const data = JSON.parse(xhr.responseText);
-        if (xhr.status >= 200 && xhr.status < 300) {
-          resolve(data);
-        } else {
-          reject(new Error(data.message || 'Upload failed'));
-        }
-      } catch {
-        reject(new Error('Upload failed — invalid response'));
-      }
-    };
-
-    xhr.onerror = () => reject(new Error('Network error during upload'));
-    xhr.send(formData);
-  });
-};
+// Transport (for direct use in tests / advanced scenarios)
+export { http, createAbortController } from './http';

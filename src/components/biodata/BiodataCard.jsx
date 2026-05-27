@@ -41,24 +41,34 @@ const BiodataCard = ({ biodata }) => {
     .slice(0, 2)
     .toUpperCase();
 
+  // Build a descriptive label for screen readers
+  const cardLabel = [
+    name,
+    age ? `${age} years old` : null,
+    location || null,
+    religion || null,
+  ].filter(Boolean).join(', ');
+
   return (
     <motion.div
+      role="article"
+      aria-label={cardLabel}
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
-      whileHover={{ y: -6 }}
-      className="relative rounded-2xl overflow-hidden cursor-pointer group"
+      className="relative rounded-2xl overflow-hidden cursor-pointer group card-lift"
       style={{
         background: 'linear-gradient(145deg, #1a0a00, #2a1200)',
         border: '1px solid rgba(212,160,23,0.35)',
         boxShadow: '0 4px 24px rgba(0,0,0,0.5)',
       }}
     >
-      {/* ── Age Badge ── */}
+      {/* ── Age Badge — decorative; info read from rows below ── */}
       {age && (
         <div
           className="absolute top-3 right-3 z-20 flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold"
+          aria-hidden="true"
           style={{
             background: 'linear-gradient(135deg, #d4a017, #f0c040)',
             color: '#1a0800',
@@ -77,8 +87,8 @@ const BiodataCard = ({ biodata }) => {
           background: 'linear-gradient(135deg, #5c0a0a 0%, #8b1a1a 40%, #3d0808 100%)',
         }} />
 
-        {/* Mandala / geometric SVG pattern overlay */}
-        <svg className="absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
+        {/* Mandala / geometric SVG pattern overlay — decorative */}
+        <svg className="absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
           {/* Large circle rings */}
           <circle cx="50%" cy="50%" r="60" fill="none" stroke="#f0c040" strokeWidth="0.8" />
           <circle cx="50%" cy="50%" r="80" fill="none" stroke="#f0c040" strokeWidth="0.5" />
@@ -119,8 +129,9 @@ const BiodataCard = ({ biodata }) => {
                 style={{ background: 'linear-gradient(135deg, #d4a017, #8b0000)' }} />
               <img
                 src={photoURL}
-                alt={name}
+                alt={`Profile photo of ${name}`}
                 className="relative w-24 h-32 rounded-xl object-cover"
+                loading="lazy"
                 style={{ border: '2px solid rgba(212,160,23,0.7)' }}
               />
             </div>
@@ -206,16 +217,18 @@ const BiodataCard = ({ biodata }) => {
         {/* View Button */}
         <Link
           to={`/profile/${_id}`}
-          className="flex items-center justify-center gap-2 w-full py-2 rounded-xl text-xs font-semibold transition-all group-hover:scale-[1.02]"
+          aria-label={`View biodata of ${name}`}
+          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs font-semibold transition-all duration-300
+            group-hover:shadow-[0_0_20px_rgba(212,160,23,0.35)] group-hover:border-yellow-600/60"
           style={{
-            background: 'linear-gradient(135deg, rgba(139,0,0,0.6), rgba(90,0,0,0.8))',
+            background: 'linear-gradient(135deg, rgba(139,0,0,0.7), rgba(90,0,0,0.9))',
             border: '1px solid rgba(212,160,23,0.4)',
             color: '#f0c040',
           }}
         >
-          <Heart className="w-3.5 h-3.5 fill-current opacity-70" />
+          <Heart className="w-3.5 h-3.5 fill-current opacity-70" aria-hidden="true" />
           View Biodata
-          <ExternalLink className="w-3 h-3 opacity-60 group-hover:opacity-100" />
+          <ExternalLink className="w-3 h-3 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-transform" aria-hidden="true" />
         </Link>
       </div>
     </motion.div>

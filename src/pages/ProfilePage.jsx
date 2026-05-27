@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { lazy, Suspense, useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence, useScroll, useSpring } from 'framer-motion';
 import {
@@ -11,11 +11,13 @@ import HeroBanner from '../components/biodata/HeroBanner';
 import PersonalInfoCard from '../components/biodata/PersonalInfoCard';
 import EducationCard from '../components/biodata/EducationCard';
 import FamilyCard from '../components/biodata/FamilyCard';
-import BiodataPDFTemplate from '../components/biodata/BiodataPDFTemplate';
+// Lazy-load PDF template — only needed on print, not on initial page load
+const BiodataPDFTemplate = lazy(() => import('../components/biodata/BiodataPDFTemplate'));
 import Card from '../components/ui/Card';
 import Section from '../components/ui/Section';
 import Loader from '../components/ui/Loader';
 import Button from '../components/ui/Button';
+import { PersonProfileSchema } from '../components/seo/SchemaMarkup';
 
 /* ══════════════════════════════════════════════════════════════
    PREMIUM PDF ENGINE — Production-Ready, Mobile-Friendly
@@ -267,6 +269,63 @@ const ProfilePage = () => {
     load();
   }, [id]);
 
+  // ── Dynamic SEO: update <title> and <canonical> when profile data loads ──
+  useEffect(() => {
+    if (!biodata) return;
+    const name = biodata?.personalInfo?.fullName;
+    const city = biodata?.personalInfo?.city || '';
+    const age  = biodata?.personalInfo?.age  || '';
+
+    // Unique title per profile
+    document.title = name
+      ? `${name}'s Marriage Biodata${city ? ` | ${city}` : ''} | Aguaa`
+      : 'Marriage Biodata Profile | Aguaa';
+
+    // Unique canonical per profile — critical for preventing duplicate content
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.rel = 'canonical';
+      document.head.appendChild(canonical);
+    }
+    canonical.href = `https://aguaa.in/profile/${id}`;
+
+    // OG tags for social sharing (WhatsApp, Facebook)
+    const setMeta = (attr, name, content) => {
+      let el = document.querySelector(`meta[${attr}="${name}"]`);
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr, name);
+        document.head.appendChild(el);
+      }
+      el.content = content;
+    };
+    const ogTitle = name
+      ? `${name}'s Marriage Biodata${age ? ` (${age} yrs)` : ''}${city ? ` | ${city}` : ''} | Aguaa`
+      : 'Marriage Biodata Profile | Aguaa';
+    const ogDesc = [
+      `View ${name || 'this'}'s verified marriage biodata on Aguaa`,
+      age  ? `(${age} years)` : '',
+      city ? `from ${city}` : '',
+      '— Dil Se Rishta, Vishwas Se Shaadi.',
+    ].filter(Boolean).join(' ');
+    const ogImg = biodata.photoURL || 'https://aguaa.in/og-banner.png';
+
+    setMeta('property', 'og:title',       ogTitle);
+    setMeta('property', 'og:description', ogDesc);
+    setMeta('property', 'og:url',         `https://aguaa.in/profile/${id}`);
+    setMeta('property', 'og:type',        'profile');
+    setMeta('property', 'og:image',       ogImg);
+    setMeta('name',     'twitter:title',       ogTitle);
+    setMeta('name',     'twitter:description', ogDesc);
+    setMeta('name',     'twitter:image',       ogImg);
+
+    // Restore generic title on unmount
+    return () => {
+      document.title = 'Aguaa — Free Marriage Biodata Maker | Shaadi Biodata | Bihar UP Jharkhand';
+    };
+  }, [biodata, id]);
+
   const handleCopyLink = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
@@ -337,6 +396,9 @@ const ProfilePage = () => {
   return (
     <div className="min-h-screen noise-overlay relative">
 
+      {/* ── Person Profile JSON-LD Schema ────────────── */}
+      <PersonProfileSchema biodata={biodata} />
+
       {/* ─── Overlays ───────────────────────────────── */}
       <PdfLoadingOverlay visible={pdfLoading} stage={pdfStage} />
       <ErrorToast message={pdfError} onClose={() => setPdfError('')} />
@@ -360,7 +422,9 @@ const ProfilePage = () => {
           pointerEvents: 'none',
         }}
       >
-        <BiodataPDFTemplate biodata={biodata} />
+        <Suspense fallback={null}>
+          <BiodataPDFTemplate biodata={biodata} />
+        </Suspense>
       </div>
 
       {/* ─── Scroll Progress ─────────────────────────── */}
@@ -608,7 +672,9 @@ const ProfilePage = () => {
       {typeof document !== 'undefined' && (() => {
         const printRoot = document.getElementById('print-biodata-root');
         return printRoot ? createPortal(
-          <BiodataPDFTemplate biodata={biodata} />,
+          <Suspense fallback={null}>
+            <BiodataPDFTemplate biodata={biodata} />
+          </Suspense>,
           printRoot
         ) : null;
       })()}

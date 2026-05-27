@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   Sparkles,
 } from "lucide-react";
+import { useSEO } from '../hooks/useSEO';
 
 /* ─────────────── design tokens ─────────────── */
 const BG = "#0f0a00";
@@ -284,6 +285,8 @@ function SectionCard({ section, index }) {
 
 /* ─────────────── main component ─────────────── */
 export default function RefundPage() {
+  useSEO('/refund');
+
   return (
     <div style={{
       minHeight: "100vh",

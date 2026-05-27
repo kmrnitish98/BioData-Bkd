@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import { Link } from "react-router-dom";
+import { useSEO } from '../hooks/useSEO';
 import {
   Shield,
   Lock,
@@ -135,6 +136,8 @@ function SubHeading({ children }) {
 }
 
 export default function PrivacyPage() {
+  useSEO('/privacy');
+
   const [activeSection, setActiveSection] = useState("introduction");
 
   useEffect(() => {

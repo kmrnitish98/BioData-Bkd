@@ -1,0 +1,64 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Render Deployment Configuration — Aguaa Backend
+# Docs: https://render.com/docs/blueprint-spec
+#
+# HOW TO USE:
+#   1. Push this file to the root of your repository
+#   2. In Render dashboard → New → Blueprint → connect your repo
+#   3. Render will auto-detect this file and configure the service
+#   4. Set secret env vars (marked envVarGroups or with sync: false) manually
+#      in Render dashboard → your service → Environment
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  - type: web
+    name: aguaa-backend
+    runtime: node
+    region: singapore          # Closest to Bihar/UP/Jharkhand target audience
+    plan: free                 # Upgrade to "starter" ($7/mo) to avoid cold starts
+
+    # Root directory of the backend relative to repo root
+    rootDir: backend
+
+    # Render runs this to install dependencies
+    buildCommand: npm install
+
+    # Render runs this to start the server
+    startCommand: node server.js
+
+    # Health check — Render pings this to verify the service is up
+    healthCheckPath: /api/health
+
+    # Auto-deploy when commits are pushed to main branch
+    autoDeploy: true
+
+    envVars:
+      # ── Required secrets — set these MANUALLY in Render dashboard
+      # (never hardcode real secrets in this file)
+      - key: NODE_ENV
+        value: production
+
+      - key: PORT
+        value: 10000             # Render assigns a dynamic PORT but this is the default
+
+      - key: MONGO_URI
+        sync: false              # Set manually in Render → Environment tab
+
+      - key: JWT_SECRET
+        sync: false              # Set manually — generate with: node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+
+      - key: JWT_EXPIRES_IN
+        value: 7d
+
+      - key: CLIENT_URL
+        value: https://aguaa.in  # Your Vercel frontend URL — used in CORS allowlist
+
+      # ── Cloudinary — set manually in Render dashboard
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+
+      - key: CLOUDINARY_API_KEY
+        sync: false
+
+      - key: CLOUDINARY_API_SECRET
+        sync: false

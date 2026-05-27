@@ -1,5 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const axios = require('axios');
 const rateLimit = require('express-rate-limit');
 const { z } = require('zod');
 const User = require('../models/User');
@@ -103,7 +104,6 @@ router.post('/google', async (req, res) => {
     const { token } = req.body;
     if (!token) return res.status(400).json({ message: 'No Google token provided' });
 
-    const axios = require('axios');
     const { data } = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -141,7 +141,9 @@ router.post('/google', async (req, res) => {
 router.post('/logout', (req, res) => {
   res.cookie('token', '', {
     httpOnly: true,
-    expires: new Date(0),
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+    expires: new Date(0),   // Immediately expired
   });
   res.json({ message: 'Logged out successfully' });
 });
