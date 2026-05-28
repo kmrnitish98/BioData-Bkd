@@ -1,42 +1,30 @@
 {
-  "name": "biodata",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "name": "biodata-backend",
+  "version": "1.0.0",
+  "main": "server.js",
+  "type": "commonjs",
   "scripts": {
-    "dev": "vite --port 5173 --strictPort false",
-    "build": "vite build",
-    "build:prod": "cross-env NODE_ENV=production vite build",
-    "lint": "eslint .",
-    "preview": "vite preview",
-    "preview:prod": "vite preview --port 4173",
-    "optimize:images": "node scripts/optimize-images.mjs"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
   "dependencies": {
-    "@react-oauth/google": "^0.13.5",
-    "@tanstack/react-query": "^5.100.14",
-    "framer-motion": "^12.39.0",
-    "lucide-react": "^1.16.0",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "react-hook-form": "^7.72.1",
-    "react-router-dom": "^7.14.0",
-    "swiper": "^12.1.3"
+    "axios": "^1.16.1",
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^1.41.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-mongo-sanitize": "^2.2.0",
+    "express-rate-limit": "^8.5.2",
+    "helmet": "^8.2.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.0.3",
+    "multer": "^1.4.5-lts.1",
+    "multer-storage-cloudinary": "^4.0.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.4",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^4.7.0",
-    "autoprefixer": "^10.4.27",
-    "cross-env": "^10.1.0",
-    "eslint": "^9.39.4",
-    "eslint-plugin-react-hooks": "^7.0.1",
-    "eslint-plugin-react-refresh": "^0.5.2",
-    "globals": "^17.4.0",
-    "postcss": "^8.5.8",
-    "sharp": "^0.34.5",
-    "tailwindcss": "^3.4.19",
-    "vite": "^5.4.21"
+    "nodemon": "^3.0.2"
   }
 }

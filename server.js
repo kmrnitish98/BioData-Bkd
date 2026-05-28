@@ -159,7 +159,7 @@ app.use((err, req, res, next) => {
   res.status(status).json(response);
 });
 
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5006;
 app.listen(PORT, () => {
   console.log(`🚀 BioData API running on http://localhost:${PORT} [${IS_PROD ? 'production' : 'development'}]`);
 });

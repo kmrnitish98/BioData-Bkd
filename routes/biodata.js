@@ -1,5 +1,4 @@
 const express = require('express');
-const fs = require('fs');
 const Biodata = require('../models/Biodata');
 const { protect } = require('../middleware/auth');
 const { upload, cloudinary } = require('../config/cloudinary');

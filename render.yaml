@@ -17,14 +17,14 @@ services:
     region: singapore          # Closest to Bihar/UP/Jharkhand target audience
     plan: free                 # Upgrade to "starter" ($7/mo) to avoid cold starts
 
-    # Root directory of the backend — explicitly set in commands below
-    # (rootDir alone can be overridden by Render dashboard settings)
+    # Root directory of the backend relative to repo root
+    rootDir: backend
 
     # Render runs this to install dependencies
-    buildCommand: cd backend && npm install
+    buildCommand: npm install
 
     # Render runs this to start the server
-    startCommand: node backend/server.js
+    startCommand: node server.js
 
     # Health check — Render pings this to verify the service is up
     healthCheckPath: /api/health
