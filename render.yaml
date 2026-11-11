@@ -51,7 +51,7 @@ services:
         value: 7d
 
       - key: CLIENT_URL
-        value: https://aguaa.in  # Your Vercel frontend URL — used in CORS allowlist
+        value: https://myaguaa.in  # Your Vercel frontend URL — used in CORS allowlist
 
       # ── Cloudinary — set manually in Render dashboard
       - key: CLOUDINARY_CLOUD_NAME

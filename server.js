@@ -32,6 +32,8 @@ connectDB();
 //    CLIENT_URL env var is the single source of truth for your frontend URL.
 //    Update it in Render env vars when your frontend domain changes.
 const allowedOrigins = [
+  'https://myaguaa.in',
+  'https://www.myaguaa.in',
   'https://aguaa.in',
   'https://www.aguaa.in',
   /^https:\/\/aguaa-[a-z0-9-]+\.vercel\.app$/, // Vercel preview deploys
@@ -110,6 +112,9 @@ const authLimiter = rateLimit({
 // ── Routes
 app.use('/api/auth', authLimiter, require('./routes/auth'));
 app.use('/api/biodata', require('./routes/biodata'));
+app.use('/api/biodata-requests', require('./routes/biodataRequests'));
+app.use('/api/admin', require('./routes/admin'));
+app.use('/api/contact', require('./routes/contact'));
 
 // ── Health check (no auth, no rate limit)
 app.get('/api/health', (req, res) => {

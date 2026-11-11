@@ -13,6 +13,10 @@ const biodataSchema = new mongoose.Schema(
       default: true,
       index: true,
     },
+    templateId: {
+      type: String,
+      default: 'default',
+    },
     photoURL: {
       type: String,
       default: '',
@@ -35,6 +39,7 @@ const biodataSchema = new mongoose.Schema(
       weight: String,
       maritalStatus: String,
       city: String,
+      state: String,
       religion: String,
       caste: String,
       gotra: String,

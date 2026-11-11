@@ -20,10 +20,24 @@ const protect = async (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({ message: 'User not found' });
     }
+    if (req.user.isDisabled || req.user.isActive === false) {
+      return res.status(403).json({ message: 'Account is disabled. Please contact support.' });
+    }
     next();
   } catch (err) {
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: 'Token expired. Please sign in again.' });
+    }
     return res.status(401).json({ message: 'Not authorized, token invalid' });
   }
 };
 
-module.exports = { protect };
+// Admin-only protection — chain after protect
+const adminProtect = (req, res, next) => {
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Admin access required' });
+  }
+  next();
+};
+
+module.exports = { protect, adminProtect };
