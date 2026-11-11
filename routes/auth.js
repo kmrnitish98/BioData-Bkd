@@ -391,7 +391,7 @@ router.post("/forgot-password", forgotPasswordLimiter, async (req, res) => {
     const clientBaseUrl = (
       process.env.CLIENT_URL ||
       process.env.FRONTEND_URL ||
-      "http://localhost:5173"
+      "https://myaguaa.in"
     ).replace(/\/$/, "");
     const resetUrl = `${clientBaseUrl}/reset-password?token=${resetToken}`;
 
@@ -542,7 +542,7 @@ router.post("/resend-verification", async (req, res) => {
     const clientBaseUrl = (
       process.env.CLIENT_URL ||
       process.env.FRONTEND_URL ||
-      "http://localhost:5173"
+      "https://myaguaa.in"
     ).replace(/\/$/, "");
     const verifyUrl = `${clientBaseUrl}/verify-email?token=${verificationToken}`;
 

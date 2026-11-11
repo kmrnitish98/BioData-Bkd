@@ -1,18 +1,49 @@
 const nodemailer = require("nodemailer");
 
 /**
- * Creates and returns configured Nodemailer transporter
+ * Creates and returns configured Nodemailer transporter with connection timeouts
  */
 const createTransporter = () => {
-  return nodemailer.createTransport({
-    host: process.env.EMAIL_HOST || "smtp.gmail.com",
-    port: Number(process.env.EMAIL_PORT) || 587,
-    secure: process.env.EMAIL_SECURE === "true", // true for 465, false for 587
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
+  const user = process.env.EMAIL_USER;
+  const rawPass = process.env.EMAIL_PASS;
+
+  if (!user || !rawPass) {
+    const err = new Error("Email service configuration missing: EMAIL_USER or EMAIL_PASS environment variable is not defined");
+    err.code = "EMAIL_CONFIG_MISSING";
+    throw err;
+  }
+
+  // Google App Passwords are 16 characters often copied with spaces (e.g. "abcd efgh ijkl mnop")
+  const cleanPass = rawPass.replace(/\s+/g, "");
+  const host = process.env.EMAIL_HOST || "smtp.gmail.com";
+  const port = Number(process.env.EMAIL_PORT) || 587;
+  const isGmail = host.includes("gmail") || process.env.EMAIL_SERVICE === "gmail";
+
+  const baseConfig = isGmail
+    ? {
+        service: "gmail",
+        auth: {
+          user,
+          pass: cleanPass,
+        },
+        connectionTimeout: 10000, // 10 seconds
+        greetingTimeout: 10000,   // 10 seconds
+        socketTimeout: 15000,     // 15 seconds
+      }
+    : {
+        host,
+        port,
+        secure: process.env.EMAIL_SECURE === "true" || port === 465,
+        auth: {
+          user,
+          pass: cleanPass,
+        },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 15000,
+      };
+
+  return nodemailer.createTransport(baseConfig);
 };
 
 /**

@@ -1,5 +1,7 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const Biodata = require('../models/Biodata');
 const User = require('../models/User');
 const BiodataRequest = require('../models/BiodataRequest');
@@ -7,6 +9,81 @@ const { protect } = require('../middleware/auth');
 const { upload, cloudinary } = require('../config/cloudinary');
 
 const router = express.Router();
+
+/**
+ * Auto-assigns and persists a unique shortId for legacy records missing one.
+ */
+const ensureDocumentShortId = async (doc) => {
+  if (!doc || doc.shortId) return doc;
+  try {
+    let candidate = doc._id ? doc._id.toString().substring(0, 8).toLowerCase() : null;
+    if (candidate) {
+      const exists = await Biodata.findOne({ shortId: candidate, _id: { $ne: doc._id } });
+      if (exists) {
+        candidate = crypto.randomBytes(4).toString('hex').toLowerCase();
+      }
+    } else {
+      candidate = crypto.randomBytes(4).toString('hex').toLowerCase();
+    }
+    await Biodata.updateOne({ _id: doc._id }, { $set: { shortId: candidate } });
+    doc.shortId = candidate;
+  } catch (err) {
+    console.error('[Biodata] Failed to auto-assign shortId:', err.message);
+  }
+  return doc;
+};
+
+/**
+ * Resolves a biodata profile by:
+ * 1. 24-character hex MongoDB ObjectId (e.g. 6af4031c256ffa30ce7307ae)
+ * 2. Dedicated indexed shortId (e.g. 6af4031c)
+ * 3. Human-readable slug (e.g. rahul-kumar-28-6af4031c or rahul-kumar-28-6af4031c256ffa30ce7307ae)
+ * 4. Backward-compatible range query on _id for legacy unmigrated records
+ */
+const findBiodataByIdOrSlug = async (identifier, projection = null) => {
+  if (!identifier || typeof identifier !== 'string') return null;
+  const raw = identifier.trim();
+
+  // 1. Direct 24-character ObjectId lookup
+  if (mongoose.Types.ObjectId.isValid(raw) && raw.length === 24) {
+    const doc = await Biodata.findById(raw).select(projection);
+    if (doc) return ensureDocumentShortId(doc);
+  }
+
+  // 2. Direct unique shortId lookup (e.g. "6af4031c")
+  const byShortId = await Biodata.findOne({ shortId: raw.toLowerCase() }).select(projection);
+  if (byShortId) return ensureDocumentShortId(byShortId);
+
+  // 3. Extract trailing identifier from slug:
+  // 3a. Check for 24-character hex at end of slug (e.g. ...-6af4031c256ffa30ce7307ae)
+  const match24 = raw.match(/(?:^|-)([a-f0-9]{24})$/i);
+  if (match24) {
+    const doc = await Biodata.findById(match24[1]).select(projection);
+    if (doc) return ensureDocumentShortId(doc);
+  }
+
+  // 3b. Check for shortId at end of slug (e.g. rahul-kumar-28-6af4031c)
+  const matchShort = raw.match(/(?:^|-)([a-z0-9]{6,12})$/i);
+  if (matchShort) {
+    const shortCandidate = matchShort[1].toLowerCase();
+    const doc = await Biodata.findOne({ shortId: shortCandidate }).select(projection);
+    if (doc) return ensureDocumentShortId(doc);
+
+    // Legacy unmigrated record fallback: range query on _id for 8-char hex
+    if (/^[a-f0-9]{8}$/i.test(shortCandidate)) {
+      try {
+        const minId = new mongoose.Types.ObjectId(shortCandidate + '0000000000000000');
+        const maxId = new mongoose.Types.ObjectId(shortCandidate + 'ffffffffffffffff');
+        const legacyDoc = await Biodata.findOne({ _id: { $gte: minId, $lte: maxId } }).select(projection);
+        if (legacyDoc) return ensureDocumentShortId(legacyDoc);
+      } catch (rangeErr) {
+        // Ignore invalid ObjectId cast
+      }
+    }
+  }
+
+  return null;
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // IMPORTANT: Specific named routes MUST come before parameterised /:id routes.
@@ -225,8 +302,10 @@ router.get('/user/:id/private', protect, async (req, res) => {
 // ── GET /api/biodata/:id/preview ─ public profile preview without contact details
 router.get('/:id/preview', async (req, res) => {
   try {
-    const biodata = await Biodata.findById(req.params.id)
-      .select('-preferences.contactPhone -preferences.contactEmail -preferences.contactName');
+    const biodata = await findBiodataByIdOrSlug(
+      req.params.id,
+      '-preferences.contactPhone -preferences.contactEmail -preferences.contactName'
+    );
     if (!biodata) return res.status(404).json({ message: 'Biodata not found' });
 
     if (!biodata.isPublic) {
@@ -243,7 +322,7 @@ router.get('/:id/preview', async (req, res) => {
 // ── GET /api/biodata/:id ─ full profile (authorization required: owner, admin, or accepted requester)
 router.get('/:id', async (req, res) => {
   try {
-    const biodata = await Biodata.findById(req.params.id);
+    const biodata = await findBiodataByIdOrSlug(req.params.id);
     if (!biodata) return res.status(404).json({ message: 'Biodata not found' });
 
     // Authentication check: token required
@@ -421,3 +500,4 @@ router.delete('/:id', protect, async (req, res) => {
 });
 
 module.exports = router;
+module.exports.findBiodataByIdOrSlug = findBiodataByIdOrSlug;

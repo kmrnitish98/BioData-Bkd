@@ -32,6 +32,42 @@ const ensureIndexes = async (db) => {
   }
 };
 
+const ensureBiodataShortIds = async (db) => {
+  try {
+    const col = db.collection('biodatas');
+    const indexes = await col.indexes();
+    const shortIdIdx = indexes.find((i) => i.name === 'shortId_1' || (i.key && i.key.shortId === 1));
+    if (!shortIdIdx) {
+      await col.createIndex({ shortId: 1 }, { unique: true, sparse: true, background: true });
+    }
+
+    const unmigrated = await col.find({
+      $or: [{ shortId: { $exists: false } }, { shortId: null }, { shortId: '' }]
+    }).toArray();
+
+    if (unmigrated.length > 0) {
+      console.log(`[Biodata] Backfilling unique shortId for ${unmigrated.length} records...`);
+      const crypto = require('crypto');
+      for (const doc of unmigrated) {
+        let candidate = doc._id.toString().substring(0, 8).toLowerCase();
+        const exists = await col.findOne({ shortId: candidate, _id: { $ne: doc._id } });
+        if (exists) {
+          let unique = false;
+          while (!unique) {
+            candidate = crypto.randomBytes(4).toString('hex').toLowerCase();
+            const cExists = await col.findOne({ shortId: candidate });
+            if (!cExists) unique = true;
+          }
+        }
+        await col.updateOne({ _id: doc._id }, { $set: { shortId: candidate } });
+      }
+      console.log('[Biodata] ShortId backfill completed successfully.');
+    }
+  } catch (err) {
+    console.warn('⚠️ [Database] ShortId backfill note:', err.message);
+  }
+};
+
 const connectDB = async () => {
   try {
     const mongoUri = process.env.MONGO_URI || process.env.MONGODB_URI;
@@ -44,6 +80,7 @@ const connectDB = async () => {
     const conn = await mongoose.connect(mongoUri);
     console.log(`✅ MongoDB connected: ${conn.connection.host}`);
     await ensureIndexes(conn.connection.db);
+    await ensureBiodataShortIds(conn.connection.db);
   } catch (err) {
     console.error('❌ MongoDB connection error:', err.message);
     process.exit(1);

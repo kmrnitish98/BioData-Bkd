@@ -2,6 +2,7 @@ const express = require('express');
 const Biodata = require('../models/Biodata');
 const BiodataRequest = require('../models/BiodataRequest');
 const { protect } = require('../middleware/auth');
+const { findBiodataByIdOrSlug } = require('./biodata');
 
 const router = express.Router();
 
@@ -17,7 +18,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ message: 'Biodata ID is required' });
     }
 
-    const biodata = await Biodata.findById(biodataId);
+    const biodata = await findBiodataByIdOrSlug(biodataId);
     if (!biodata) {
       return res.status(404).json({ message: 'Biodata not found' });
     }
@@ -83,7 +84,7 @@ router.post('/', async (req, res) => {
 // ── GET /api/biodata-requests/status/:biodataId ─ check current user's request status
 router.get('/status/:biodataId', async (req, res) => {
   try {
-    const biodata = await Biodata.findById(req.params.biodataId);
+    const biodata = await findBiodataByIdOrSlug(req.params.biodataId);
     if (!biodata) {
       return res.status(404).json({ message: 'Biodata not found' });
     }
